@@ -1,0 +1,4 @@
+# Empêche l'indexation / lecture des secrets par l'agent
+.env
+.env.local
+.env.*.local

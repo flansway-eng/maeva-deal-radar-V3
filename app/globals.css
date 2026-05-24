@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  --bg-base: #0a0b0d;
+  --bg-surface: #111317;
+  --bg-elevated: #16191f;
+  --border-subtle: #1f232b;
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
+
+  --accent-pe: #f5c518;
+  --accent-ma: #5b8def;
+
+  --status-planned: #9aa0a6;
+  --status-done: #4ade80;
+  --status-postponed: #fbbf24;
+  --status-stopped: #71717a;
+  --status-cancelled: #f87171;
+}
+
+@theme inline {
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-border-subtle: var(--border-subtle);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+
+  --color-accent-pe: var(--accent-pe);
+  --color-accent-ma: var(--accent-ma);
+
+  --color-status-planned: var(--status-planned);
+  --color-status-done: var(--status-done);
+  --color-status-postponed: var(--status-postponed);
+  --color-status-stopped: var(--status-stopped);
+  --color-status-cancelled: var(--status-cancelled);
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Custom premium scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
