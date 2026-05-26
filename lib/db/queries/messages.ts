@@ -109,8 +109,8 @@ export async function updateTaskMessage(
       .update(sequenceTasks)
       .set({ messageSubject, messageBody })
       .where(eq(sequenceTasks.id, taskId))
-      .run();
-    if ((result.changes ?? 0) > 0) return true;
+      .execute();
+    if ((result.rowCount ?? 0) > 0) return true;
   } catch {
     // fixture
   }
@@ -142,3 +142,5 @@ function mapRow(r: typeof sequenceTasks.$inferSelect): FixtureTask {
     stopReason: r.stopReason ?? null,
   };
 }
+
+

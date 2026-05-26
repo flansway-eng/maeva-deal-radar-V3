@@ -2,10 +2,11 @@ import {
   index,
   integer,
   real,
-  sqliteTable,
+  pgTable,
   text,
   uniqueIndex,
-} from "drizzle-orm/sqlite-core";
+  timestamp,
+} from "drizzle-orm/pg-core";
 
 // ─── Types métier ─────────────────────────────────────────────────────────────
 
@@ -65,12 +66,12 @@ export interface Signal {
 // Les colonnes JSON sont stockées en TEXT et sérialisées à l'écriture.
 
 // ─── 5.1 — web_discoveries ────────────────────────────────────────────────────
-export const webDiscoveries = sqliteTable(
+export const webDiscoveries = pgTable(
   "web_discoveries",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .$defaultFn(() => new Date())
+    createdAt: timestamp("created_at")
+      .defaultNow()
       .notNull(),
     sourceTitle: text("source_title").notNull(),
     sourceUrl: text("source_url").notNull(),
@@ -91,10 +92,10 @@ export const webDiscoveries = sqliteTable(
 );
 
 // ─── 5.2 — sourcing_runs ─────────────────────────────────────────────────────
-export const sourcingRuns = sqliteTable("sourcing_runs", {
+export const sourcingRuns = pgTable("sourcing_runs", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  triggeredAt: integer("triggered_at", { mode: "timestamp_ms" })
-    .$defaultFn(() => new Date())
+  triggeredAt: timestamp("triggered_at")
+    .defaultNow()
     .notNull(),
   // triggeredBy: supprimé (référence auth.users Supabase — non disponible en SQLite)
   // JSON serialisé : string[]
@@ -105,10 +106,10 @@ export const sourcingRuns = sqliteTable("sourcing_runs", {
 });
 
 // ─── 5.3 — leads ─────────────────────────────────────────────────────────────
-export const leads = sqliteTable("leads", {
+export const leads = pgTable("leads", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .$defaultFn(() => new Date())
+  createdAt: timestamp("created_at")
+    .defaultNow()
     .notNull(),
   discoveryId: text("discovery_id").references(() => webDiscoveries.id),
   companyName: text("company_name").notNull(),
@@ -133,19 +134,19 @@ export const leads = sqliteTable("leads", {
   pappersData: text("pappers_data"),
   // JSON serialisé : LeadQualificationData
   qualificationData: text("qualification_data"),
-  qualifiedAt: integer("qualified_at", { mode: "timestamp_ms" }),
+  qualifiedAt: timestamp("qualified_at"),
   // embedding : stocké JSON sérialisé (vector(1536) non supporté en SQLite)
   embedding: text("embedding"),
 });
 
 // ─── 5.4 — sequence_tasks ────────────────────────────────────────────────────
-export const sequenceTasks = sqliteTable(
+export const sequenceTasks = pgTable(
   "sequence_tasks",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     sequenceUid: text("sequence_uid").notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .$defaultFn(() => new Date())
+    createdAt: timestamp("created_at")
+      .defaultNow()
       .notNull(),
     leadId: text("lead_id").references(() => leads.id),
     company: text("company").notNull(),
@@ -171,7 +172,7 @@ export const sequenceTasks = sqliteTable(
       .default("PLANNED")
       .notNull(),
     executionNote: text("execution_note"),
-    executedAt: integer("executed_at", { mode: "timestamp_ms" }),
+    executedAt: timestamp("executed_at"),
     stopReason: text("stop_reason"),
   },
   (t) => [
@@ -197,12 +198,12 @@ export type EventType =
   | "SOURCING_RUN_COMPLETED";
 
 // ─── 5.5 — sequence_events ────────────────────────────────────────────────────
-export const sequenceEvents = sqliteTable(
+export const sequenceEvents = pgTable(
   "sequence_events",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    occurredAt: integer("occurred_at", { mode: "timestamp_ms" })
-      .$defaultFn(() => new Date())
+    occurredAt: timestamp("occurred_at")
+      .defaultNow()
       .notNull(),
     eventType: text("event_type").$type<EventType>().notNull(),
     taskId: text("task_id").references(() => sequenceTasks.id),
@@ -218,22 +219,22 @@ export const sequenceEvents = sqliteTable(
 );
 
 // ─── 5.6 — review_decisions ──────────────────────────────────────────────────
-export const reviewDecisions = sqliteTable("review_decisions", {
+export const reviewDecisions = pgTable("review_decisions", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .$defaultFn(() => new Date())
+  createdAt: timestamp("created_at")
+    .defaultNow()
     .notNull(),
   source: text("source").notNull(),
   rawCompany: text("raw_company"),
   decision: text("decision").$type<"KEEP" | "STOP" | "CORRECT">().notNull(),
   correctedCompany: text("corrected_company"),
   reason: text("reason"),
-  appliedAt: integer("applied_at", { mode: "timestamp_ms" }),
+  appliedAt: timestamp("applied_at"),
   // appliedBy: supprimé (référence auth.users Supabase)
 });
 
 // ─── 5.7 — company_aliases ───────────────────────────────────────────────────
-export const companyAliases = sqliteTable(
+export const companyAliases = pgTable(
   "company_aliases",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -246,28 +247,28 @@ export const companyAliases = sqliteTable(
 );
 
 // ─── daily_briefs ─────────────────────────────────────────────────────────────
-export const dailyBriefs = sqliteTable(
+export const dailyBriefs = pgTable(
   "daily_briefs",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     briefDate: text("brief_date").notNull(), // ISO YYYY-MM-DD
     contentMarkdown: text("content_markdown").notNull(),
-    generatedAt: integer("generated_at", { mode: "timestamp_ms" })
-      .$defaultFn(() => new Date())
+    generatedAt: timestamp("generated_at")
+      .defaultNow()
       .notNull(),
   },
   (t) => [uniqueIndex("daily_briefs_date_unique").on(t.briefDate)],
 );
 
 // ─── signal_feed ──────────────────────────────────────────────────────────────
-export const signalFeed = sqliteTable(
+export const signalFeed = pgTable(
   "signal_feed",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    fetchedAt: integer("fetched_at", { mode: "timestamp_ms" })
-      .$defaultFn(() => new Date())
+    fetchedAt: timestamp("fetched_at")
+      .defaultNow()
       .notNull(),
-    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    publishedAt: timestamp("published_at"),
     source: text("source").$type<SignalSource>().notNull(),
     sourceUrl: text("source_url"),
     title: text("title").notNull(),
@@ -294,39 +295,39 @@ export const signalFeed = sqliteTable(
 );
 
 // ─── signal_feed_items (Legacy) ───────────────────────────────────────────────
-export const signalFeedItems = sqliteTable(
+export const signalFeedItems = pgTable(
   "signal_feed_items",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .$defaultFn(() => new Date())
+    createdAt: timestamp("created_at")
+      .defaultNow()
       .notNull(),
     title: text("title").notNull(),
     sourceUrl: text("source_url"),
     snippet: text("snippet"),
     category: text("category").$type<"PE" | "MA" | "MARKET">(),
     score: real("score"),
-    publishedAt: integer("published_at", { mode: "timestamp_ms" })
-      .$defaultFn(() => new Date())
+    publishedAt: timestamp("published_at")
+      .defaultNow()
       .notNull(),
   },
   (t) => [index("sfi_published_idx").on(t.publishedAt)],
 );
 
 // ─── copilot_conversations ───────────────────────────────────────────────────
-export const copilotConversations = sqliteTable("copilot_conversations", {
+export const copilotConversations = pgTable("copilot_conversations", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .$defaultFn(() => new Date())
+  createdAt: timestamp("created_at")
+    .defaultNow()
     .notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-    .$defaultFn(() => new Date())
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
     .notNull(),
   title: text("title").notNull(),
 });
 
 // ─── copilot_messages ────────────────────────────────────────────────────────
-export const copilotMessages = sqliteTable(
+export const copilotMessages = pgTable(
   "copilot_messages",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -337,30 +338,33 @@ export const copilotMessages = sqliteTable(
     content: text("content").notNull(),
     // JSON serialisé : Record<string, unknown>
     metadata: text("metadata"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .$defaultFn(() => new Date())
+    createdAt: timestamp("created_at")
+      .defaultNow()
       .notNull(),
   },
   (t) => [index("copilot_messages_conv_idx").on(t.conversationId)],
 );
 
 // ─── voice_notes ─────────────────────────────────────────────────────────────
-export const voiceNotes = sqliteTable("voice_notes", {
+export const voiceNotes = pgTable("voice_notes", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   taskId: text("task_id").references(() => sequenceTasks.id),
   transcript: text("transcript").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .$defaultFn(() => new Date())
+  createdAt: timestamp("created_at")
+    .defaultNow()
     .notNull(),
 });
 
 // ─── push_subscriptions ──────────────────────────────────────────────────────
-export const pushSubscriptions = sqliteTable("push_subscriptions", {
+export const pushSubscriptions = pgTable("push_subscriptions", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   endpoint: text("endpoint").notNull(),
   // JSON serialisé : { p256dh: string; auth: string }
   keys: text("keys").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .$defaultFn(() => new Date())
+  createdAt: timestamp("created_at")
+    .defaultNow()
     .notNull(),
 });
+
+
+

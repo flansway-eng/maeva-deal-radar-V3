@@ -51,8 +51,8 @@ async function updateTaskInDb(
       .update(sequenceTasks)
       .set(patch)
       .where(eq(sequenceTasks.id, taskId))
-      .run();
-    return (result.changes ?? 0) > 0;
+      .execute();
+    return (result.rowCount ?? 0) > 0;
   } catch {
     return false;
   }
@@ -279,3 +279,5 @@ export async function moveTaskStatusMutation(input: {
       return { ok: false, error: "Statut non supporté" };
   }
 }
+
+
