@@ -1,10 +1,6 @@
 {
   "crons": [
-    { "path": "/api/cron/signal-bodacc", "schedule": "*/30 * * * *" },
-    { "path": "/api/cron/signal-rss", "schedule": "0 * * * *" },
-    { "path": "/api/cron/signal-tavily", "schedule": "0 */2 * * *" },
-    { "path": "/api/cron/enrich-leads", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/generate-embeddings", "schedule": "0 * * * *" },
+    { "path": "/api/cron/signal-tavily", "schedule": "0 6 * * *" },
     { "path": "/api/cron/daily-brief", "schedule": "0 7 * * *" }
   ]
 }
