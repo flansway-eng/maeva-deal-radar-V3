@@ -1,5 +1,6 @@
 import { Command, Search, Sparkles } from "lucide-react";
 import { AppShellClient } from "@/components/layout/app-shell-client";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { getUser } from "@/lib/auth/get-user";
 import { getAllTasks } from "@/lib/db/queries/tasks";
@@ -70,11 +71,12 @@ export default async function AppLayout({
         </header>
 
         {/* Viewport Content */}
-        <main className="flex-1 overflow-y-auto p-8 relative">
+        <main className="flex-1 overflow-y-auto p-8 pb-24 md:pb-8 relative">
           <div className="max-w-7xl mx-auto space-y-6">{children}</div>
         </main>
       </div>
 
+      <MobileBottomNav />
       <AppShellClient tasks={paletteTasks} />
     </div>
   );
