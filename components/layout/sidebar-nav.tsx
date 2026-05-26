@@ -8,47 +8,49 @@ import {
   History,
   LayoutDashboard,
   Mail,
-  Search,
+  Radio,
   Settings,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isNavActive } from "@/lib/navigation/app-nav";
 
 interface SidebarNavProps {
   userEmail: string;
   userInitials: string;
 }
 
-const NAV_ITEMS = [
-  { label: "Dashboard",       href: "/",          icon: LayoutDashboard },
-  { label: "Sourcing Web",    href: "/sourcing",   icon: Search },
-  { label: "Leads & Shortlist", href: "/leads",   icon: UsersIcon },
-  { label: "File du Jour",    href: "/today",      icon: CheckCheck },
-  { label: "Pipeline",        href: "/pipeline",   icon: GitBranch },
-  { label: "Messages",        href: "/messages",   icon: Mail },
-  { label: "Copilot",         href: "/copilot",    icon: Bot },
-  { label: "Gouvernance",     href: "/governance", icon: ShieldCheck },
-  { label: "Journal",         href: "/journal",    icon: History },
-  { label: "Exports",         href: "/exports",    icon: Download },
-];
+const SIDEBAR_NAV = [
+  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Sourcing Web", href: "/sourcing", icon: Radio },
+  { label: "Leads & Shortlist", href: "/leads", icon: Users },
+  { label: "File du Jour", href: "/today", icon: CheckCheck },
+  { label: "Pipeline", href: "/pipeline", icon: GitBranch },
+  { label: "Messages", href: "/messages", icon: Mail },
+  { label: "Copilot", href: "/copilot", icon: Bot },
+  { label: "Gouvernance", href: "/governance", icon: ShieldCheck },
+  { label: "Journal", href: "/journal", icon: History },
+  { label: "Exports", href: "/exports", icon: Download },
+  { label: "Paramètres", href: "/settings", icon: Settings },
+] as const;
 
 export function SidebarNav({ userEmail, userInitials }: SidebarNavProps) {
   const pathname = usePathname();
-
-  function isActive(href: string): boolean {
-    if (href === "/") return pathname === "/";
-    return pathname === href || pathname.startsWith(`${href}/`);
-  }
+  const mainItems = SIDEBAR_NAV.slice(0, -1);
+  const settingsItem = SIDEBAR_NAV[SIDEBAR_NAV.length - 1]!;
+  const SettingsIcon = settingsItem.icon;
 
   return (
     <>
-      {/* User Card */}
       <div className="p-4 border-b border-[#1A3050] bg-[#07101E]/60">
         <div className="flex items-center gap-3">
-          {/* Avatar — dégradé or/acier Rothschild */}
-          <div className="w-8 h-8 rounded flex items-center justify-center text-[#07101E] font-bold text-xs uppercase shadow-md"
-            style={{ background: "linear-gradient(135deg, #C4974C 0%, #4472AA 100%)" }}
+          <div
+            className="w-8 h-8 rounded flex items-center justify-center text-[#07101E] font-bold text-xs uppercase shadow-md"
+            style={{
+              background: "linear-gradient(135deg, #C4974C 0%, #4472AA 100%)",
+            }}
           >
             {userInitials}
           </div>
@@ -63,11 +65,10 @@ export function SidebarNav({ userEmail, userInitials }: SidebarNavProps) {
         </div>
       </div>
 
-      {/* Nav Links */}
       <nav className="flex-1 px-3 py-5 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
+        {mainItems.map((item) => {
           const Icon = item.icon;
-          const active = isActive(item.href);
+          const active = isNavActive(pathname, item.href);
           return (
             <Link
               key={item.href}
@@ -94,40 +95,25 @@ export function SidebarNav({ userEmail, userInitials }: SidebarNavProps) {
         })}
       </nav>
 
-      {/* Sidebar Footer */}
-      <div className="p-3 border-t border-[#1A3050] bg-[#07101E]/40 space-y-0.5">
+      <div className="p-3 border-t border-[#1A3050] bg-[#07101E]/40">
         <Link
-          href="/settings"
-          className="flex items-center gap-3 px-3 py-2 text-[11px] font-medium rounded text-[#8899AE] hover:text-[#EDE8DC] hover:bg-[#112240]/70 border border-transparent transition-all group"
+          href={settingsItem.href}
+          className={`flex items-center gap-3 px-3 py-2 text-[11px] font-medium rounded border transition-all group ${
+            isNavActive(pathname, settingsItem.href)
+              ? "bg-[#112240] border-[#1A3050] text-[#EDE8DC]"
+              : "border-transparent text-[#8899AE] hover:text-[#EDE8DC] hover:bg-[#112240]/70 hover:border-[#1A3050]/60"
+          }`}
         >
-          <Settings className="w-3.5 h-3.5 text-[#8899AE] group-hover:text-[#4472AA] transition-colors" />
-          <span className="tracking-wide">Paramètres</span>
+          <SettingsIcon
+            className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+              isNavActive(pathname, settingsItem.href)
+                ? "text-[#C4974C]"
+                : "text-[#8899AE] group-hover:text-[#4472AA]"
+            }`}
+          />
+          <span className="tracking-wide">{settingsItem.label}</span>
         </Link>
       </div>
     </>
-  );
-}
-
-// Inline UsersIcon to avoid external dependency in foundation phase
-function UsersIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <title>Users</title>
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
   );
 }
