@@ -7,7 +7,6 @@ import {
   GitBranch,
   History,
   LayoutDashboard,
-  LogOut,
   Mail,
   Search,
   Settings,
@@ -104,13 +103,6 @@ export function SidebarNav({ userEmail, userInitials }: SidebarNavProps) {
           <Settings className="w-3.5 h-3.5 text-[#8899AE] group-hover:text-[#4472AA] transition-colors" />
           <span className="tracking-wide">Paramètres</span>
         </Link>
-        <a
-          href="/login"
-          className="flex items-center gap-3 px-3 py-2 text-[11px] font-medium rounded text-[#8899AE] hover:text-rose-300 hover:bg-[#112240]/70 border border-transparent transition-all group cursor-pointer"
-        >
-          <LogOut className="w-3.5 h-3.5 text-[#8899AE] group-hover:text-rose-300 transition-colors" />
-          <span className="tracking-wide">Déconnexion</span>
-        </a>
       </div>
     </>
   );

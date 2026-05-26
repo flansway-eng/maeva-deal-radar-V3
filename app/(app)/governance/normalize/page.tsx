@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { NormalizeClient } from "@/components/governance/normalize-client";
-import { auth } from "@/lib/auth";
 import { getCompanyAliasesList } from "@/lib/db/queries/governance";
 
 export const metadata: Metadata = {
@@ -10,9 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default async function NormalizePage() {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   const aliases = await getCompanyAliasesList();
 
   return (

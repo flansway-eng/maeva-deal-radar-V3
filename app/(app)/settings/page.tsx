@@ -1,8 +1,7 @@
 import { Settings } from "lucide-react";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { DangerZone } from "@/components/settings/danger-zone";
-import { auth } from "@/lib/auth";
+import { getUser } from "@/lib/auth/get-user";
 
 export const metadata: Metadata = {
   title: "Paramètres — Maeva Deal Radar Room",
@@ -10,8 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const { user } = await auth();
-  if (!user) redirect("/login");
+  const user = await getUser();
 
   return (
     <div className="max-w-lg mx-auto space-y-8 animate-fadeIn">

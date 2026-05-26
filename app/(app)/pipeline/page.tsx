@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { PipelineClient } from "@/components/pipeline/pipeline-client";
-import { auth } from "@/lib/auth";
 import { getAllTasks } from "@/lib/db/queries/tasks";
 
 export const metadata: Metadata = {
@@ -11,9 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default async function PipelinePage() {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   // Fetch all tasks server-side (no filters — client handles filtering)
   const tasks = await getAllTasks();
 

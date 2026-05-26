@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { QualityAuditView } from "@/components/governance/quality-audit-view";
-import { auth } from "@/lib/auth";
 import { buildQualityAuditReport } from "@/lib/db/queries/governance";
 
 export const metadata: Metadata = {
@@ -10,9 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default async function QualityAuditPage() {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   const report = await buildQualityAuditReport();
 
   return (

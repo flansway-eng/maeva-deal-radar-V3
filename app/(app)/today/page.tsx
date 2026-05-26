@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { TodayFileClient } from "@/components/today/today-file-client";
-import { auth } from "@/lib/auth";
 import { getTodayTasks } from "@/lib/db/queries/tasks";
 
 export const metadata: Metadata = {
@@ -10,9 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default async function TodayPage() {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   const tasks = await getTodayTasks();
 
   const todayLabel = new Intl.DateTimeFormat("fr-FR", {

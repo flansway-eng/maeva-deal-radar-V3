@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { MessageLibrary } from "@/components/messages/message-library";
-import { auth } from "@/lib/auth";
 import { getAllTasks } from "@/lib/db/queries/tasks";
 
 export const metadata: Metadata = {
@@ -10,9 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default async function MessagesPage() {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   const tasks = await getAllTasks();
 
   return (

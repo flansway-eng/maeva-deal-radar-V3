@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { LeadsShortlist } from "@/components/leads/leads-shortlist";
-import { auth } from "@/lib/auth";
 import { getCompanyAliasesList } from "@/lib/db/queries/governance";
 import { getLeadsShortlist, hasPappersKeyConfigured } from "@/lib/db/queries/leads";
 
@@ -11,9 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default async function LeadsPage() {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   const [leads, aliases, hasPappersKey] = await Promise.all([
     getLeadsShortlist(),
     getCompanyAliasesList(),

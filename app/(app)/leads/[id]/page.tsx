@@ -1,13 +1,12 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ConfidenceBar } from "@/components/leads/confidence-bar";
 import { LeadPappersPanel } from "@/components/leads/lead-pappers-panel";
 import { GenerateSequenceButton } from "@/components/leads/generate-sequence-button";
 import { LeadQualifyPanel } from "@/components/leads/lead-qualify-panel";
 import { ReviewStatusBadge } from "@/components/leads/review-status-badge";
 import { TrackBadge } from "@/components/shared/track-badge";
-import { auth } from "@/lib/auth";
 import {
   getLeadById,
   hasPappersKeyConfigured,
@@ -18,9 +17,6 @@ interface LeadDetailPageProps {
 }
 
 export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   const { id } = await params;
   const [lead, hasPappersKey] = await Promise.all([
     getLeadById(id),

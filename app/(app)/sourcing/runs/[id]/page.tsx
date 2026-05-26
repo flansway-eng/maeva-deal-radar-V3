@@ -1,10 +1,9 @@
 import { ArrowLeft, Globe } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { RunDiscoveriesTable } from "@/components/sourcing/run-discoveries-table";
 import { EmptyState } from "@/components/shared/empty-state";
-import { auth } from "@/lib/auth";
 import {
   getDiscoveriesForRun,
   getSourcingRunById,
@@ -21,9 +20,6 @@ interface RunDetailPageProps {
 export default async function SourcingRunDetailPage({
   params,
 }: RunDetailPageProps) {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   const { id } = await params;
   const run = await getSourcingRunById(id);
   if (!run) notFound();

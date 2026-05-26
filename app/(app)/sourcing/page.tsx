@@ -1,15 +1,12 @@
 import { Search } from "lucide-react";
 import type { Metadata } from "next";
 import { unstable_noStore as noStore } from "next/cache";
-import { redirect } from "next/navigation";
-
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { LaunchRunDialog } from "@/components/sourcing/launch-run-dialog";
 import { SourcingRunsTable } from "@/components/sourcing/sourcing-runs-table";
-import { auth } from "@/lib/auth";
 import { getSourcingRuns } from "@/lib/db/queries/sourcing";
 
 export const metadata: Metadata = {
@@ -19,9 +16,6 @@ export const metadata: Metadata = {
 
 export default async function SourcingPage() {
   noStore();
-
-  const { user } = await auth();
-  if (!user) redirect("/login");
 
   const runs = await getSourcingRuns();
   const hasTavilyKey = Boolean(process.env.TAVILY_API_KEY?.trim());

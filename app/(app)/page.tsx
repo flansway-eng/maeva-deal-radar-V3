@@ -8,7 +8,7 @@ import { DashboardSignalFeed } from "@/components/dashboard/dashboard-signal-fee
 import { PipelineHealthGauge } from "@/components/dashboard/pipeline-health-gauge";
 import { PushEnableButton } from "@/components/pwa/push-enable-button";
 import { ResetSuccessToast } from "@/components/settings/reset-success-toast";
-import { auth } from "@/lib/auth";
+import { getUser } from "@/lib/auth/get-user";
 import { getDashboardData } from "@/lib/db/queries/dashboard";
 
 export const dynamic = "force-dynamic";
@@ -17,8 +17,8 @@ export const revalidate = 0;
 export default async function DashboardPage() {
   noStore();
 
-  const { user } = await auth();
-  const userName = user?.email?.split("@")[0] || "Maeva";
+  const user = await getUser();
+  const userName = user.name;
   const { kpis, brief, signals, events, funnel } = await getDashboardData();
 
   const kpiTiles = [

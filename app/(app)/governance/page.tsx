@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { GovernanceHub } from "@/components/governance/governance-hub";
-import { auth } from "@/lib/auth";
 import { getPendingReviewQueue } from "@/lib/db/queries/governance";
 
 export const metadata: Metadata = {
@@ -10,9 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default async function GovernancePage() {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   const pending = await getPendingReviewQueue();
 
   return (

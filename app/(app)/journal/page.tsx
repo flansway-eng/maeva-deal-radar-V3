@@ -1,9 +1,7 @@
 import { History } from "lucide-react";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { JournalLive } from "@/components/pipeline/journal-live";
 import { EmptyState } from "@/components/shared/empty-state";
-import { auth } from "@/lib/auth";
 import { getRecentEvents } from "@/lib/db/queries/tasks";
 
 export const metadata: Metadata = {
@@ -12,9 +10,6 @@ export const metadata: Metadata = {
 };
 
 export default async function JournalPage() {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   const events = await getRecentEvents(200);
 
   return (

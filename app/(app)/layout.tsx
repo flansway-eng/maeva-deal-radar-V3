@@ -1,8 +1,7 @@
 import { Command, Search, Sparkles } from "lucide-react";
-import { redirect } from "next/navigation";
 import { AppShellClient } from "@/components/layout/app-shell-client";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
-import { auth } from "@/lib/auth";
+import { getUser } from "@/lib/auth/get-user";
 import { getAllTasks } from "@/lib/db/queries/tasks";
 
 export default async function AppLayout({
@@ -10,14 +9,9 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = await auth();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const userInitials = user.email ? user.email.slice(0, 2).toUpperCase() : "MV";
-  const userEmail = user.email ?? "Maeva";
+  const user = await getUser();
+  const userInitials = user.name.slice(0, 2).toUpperCase();
+  const userEmail = user.email;
   const paletteTasks = await getAllTasks();
 
   return (

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { MessageEditorWorkspace } from "@/components/messages/message-editor-workspace";
-import { auth } from "@/lib/auth";
 import {
   getMessageContext,
   getSequenceStepsForCompany,
@@ -17,9 +16,6 @@ interface PageProps {
 }
 
 export default async function MessageEditorPage({ params }: PageProps) {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   const { taskId } = await params;
   const task = await getTaskById(taskId);
   if (!task) notFound();

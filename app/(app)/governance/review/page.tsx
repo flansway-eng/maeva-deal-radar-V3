@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ReviewQueueClient } from "@/components/governance/review-queue-client";
-import { auth } from "@/lib/auth";
 import {
   getCompanyAliasesList,
   getPendingReviewQueue,
@@ -13,9 +11,6 @@ export const metadata: Metadata = {
 };
 
 export default async function ReviewQueuePage() {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   const [rows, aliases] = await Promise.all([
     getPendingReviewQueue(),
     getCompanyAliasesList(),

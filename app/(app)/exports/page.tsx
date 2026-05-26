@@ -1,8 +1,6 @@
 import { Download } from "lucide-react";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { EmptyState } from "@/components/shared/empty-state";
-import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Exports — Maeva Deal Radar Room",
@@ -10,9 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default async function ExportsPage() {
-  const { user } = await auth();
-  if (!user) redirect("/login");
-
   return (
     <div className="space-y-6 animate-fadeIn">
       <div className="border-b border-[#1F232B] pb-5">
