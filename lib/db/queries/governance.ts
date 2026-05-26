@@ -9,13 +9,10 @@ import {
 } from "../schema";
 import {
   FIXTURE_COMPANY_ALIASES,
-  FIXTURE_LEADS,
-  FIXTURE_REVIEW_DECISIONS,
   type FixtureCompanyAlias,
   type FixtureLead,
   type FixtureReviewDecision,
 } from "./governance-fixture";
-import { FIXTURE_TASKS } from "./seed-fixture";
 
 export type {
   FixtureCompanyAlias,
@@ -63,57 +60,39 @@ export async function getPendingReviewQueue(): Promise<PendingReviewRow[]> {
       .where(isNull(reviewDecisions.appliedAt))
       .orderBy(desc(reviewDecisions.createdAt));
 
-    if (rows.length > 0) {
-      return rows.map((r) => ({
-        id: r.id,
-        createdAt: r.createdAt.toISOString(),
-        source: r.source,
-        rawCompany: r.rawCompany ?? null,
-        decision: r.decision,
-        correctedCompany: r.correctedCompany ?? null,
-        reason: r.reason ?? null,
-        appliedAt: null,
-        leadId: null,
-        previewUrl: r.source.startsWith("http") ? r.source : null,
-        leadCompany: r.correctedCompany ?? r.rawCompany,
-        track: null,
-      }));
-    }
-  } catch {
-    // fixture fallback
-  }
-
-  return FIXTURE_REVIEW_DECISIONS.filter((r) => !r.appliedAt).map((r) => {
-    const lead = r.leadId
-      ? FIXTURE_LEADS.find((l) => l.id === r.leadId)
-      : FIXTURE_LEADS.find(
-          (l) =>
-            l.companyNameOriginal === r.rawCompany ||
-            l.companyName === r.correctedCompany,
-        );
-    return {
-      ...r,
+    // Retourne les rows DB directement — même vides après TRUNCATE
+    return rows.map((r) => ({
+      id: r.id,
+      createdAt: r.createdAt.toISOString(),
+      source: r.source,
+      rawCompany: r.rawCompany ?? null,
+      decision: r.decision,
+      correctedCompany: r.correctedCompany ?? null,
+      reason: r.reason ?? null,
+      appliedAt: null,
+      leadId: null,
       previewUrl: r.source.startsWith("http") ? r.source : null,
-      leadCompany: lead?.companyName ?? r.correctedCompany,
-      track: lead?.track ?? null,
-    };
-  });
+      leadCompany: r.correctedCompany ?? r.rawCompany,
+      track: null,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function getCompanyAliasesList(): Promise<FixtureCompanyAlias[]> {
   try {
     const rows = await db.select().from(companyAliases);
-    if (rows.length > 0) {
-      return rows.map((r) => ({
-        id: r.id,
-        domain: r.domain,
-        canonicalName: r.canonicalName,
-        track: r.track ?? null,
-        notes: r.notes ?? null,
-      }));
-    }
+    // Retourne les rows DB directement — même vides après TRUNCATE
+    return rows.map((r) => ({
+      id: r.id,
+      domain: r.domain,
+      canonicalName: r.canonicalName,
+      track: r.track ?? null,
+      notes: r.notes ?? null,
+    }));
   } catch {
-    // fixture
+    // DB inaccessible uniquement → fallback fixture
   }
   return [...FIXTURE_COMPANY_ALIASES];
 }
@@ -121,24 +100,22 @@ export async function getCompanyAliasesList(): Promise<FixtureCompanyAlias[]> {
 export async function getLeadsForGovernance(): Promise<FixtureLead[]> {
   try {
     const rows = await db.select().from(leads);
-    if (rows.length > 0) {
-      return rows.map((r) => ({
-        id: r.id,
-        companyName: r.companyName,
-        companyNameOriginal: r.companyNameOriginal ?? null,
-        website: r.website ?? null,
-        pageUrl: r.pageUrl ?? null,
-        track: r.track as "PE" | "MA",
-        targetRole: r.targetRole ?? null,
-        primarySignal: r.primarySignal ?? null,
-        reviewStatus: r.reviewStatus ?? "PENDING",
-        confidenceScore: r.confidenceScore?.toString() ?? null,
-      }));
-    }
+    // Retourne les rows DB directement — même vides après TRUNCATE
+    return rows.map((r) => ({
+      id: r.id,
+      companyName: r.companyName,
+      companyNameOriginal: r.companyNameOriginal ?? null,
+      website: r.website ?? null,
+      pageUrl: r.pageUrl ?? null,
+      track: r.track as "PE" | "MA",
+      targetRole: r.targetRole ?? null,
+      primarySignal: r.primarySignal ?? null,
+      reviewStatus: r.reviewStatus ?? "PENDING",
+      confidenceScore: r.confidenceScore?.toString() ?? null,
+    }));
   } catch {
-    // fixture
+    return [];
   }
-  return [...FIXTURE_LEADS];
 }
 
 export async function buildQualityAuditReport(): Promise<QualityAuditReport> {
@@ -152,23 +129,19 @@ export async function buildQualityAuditReport(): Promise<QualityAuditReport> {
     source: string | null;
   };
 
-  let tasks: TaskSlice[] = FIXTURE_TASKS.map((t) => ({
-    company: t.company,
-    status: t.status,
-    source: t.source,
-  }));
+  // Par défaut DB vide (après TRUNCATE) → tableau vide
+  let tasks: TaskSlice[] = [];
 
   try {
     const rows = await db.select().from(sequenceTasks);
-    if (rows.length > 0) {
-      tasks = rows.map((r) => ({
-        company: r.company,
-        status: r.status,
-        source: r.source ?? null,
-      }));
-    }
+    // Retourne les rows DB directement — même vides après TRUNCATE
+    tasks = rows.map((r) => ({
+      company: r.company,
+      status: r.status,
+      source: r.source ?? null,
+    }));
   } catch {
-    // fixture
+    tasks = [];
   }
 
   const pending = leadList.filter((l) => l.reviewStatus === "PENDING").length;

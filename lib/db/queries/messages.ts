@@ -105,12 +105,12 @@ export async function updateTaskMessage(
   messageBody: string,
 ): Promise<boolean> {
   try {
-    const updated = await db
+    const result = await db
       .update(sequenceTasks)
       .set({ messageSubject, messageBody })
       .where(eq(sequenceTasks.id, taskId))
-      .returning({ id: sequenceTasks.id });
-    if (updated.length > 0) return true;
+      .run();
+    if ((result.changes ?? 0) > 0) return true;
   } catch {
     // fixture
   }

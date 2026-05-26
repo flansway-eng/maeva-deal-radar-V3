@@ -25,13 +25,33 @@ const PE_MA_KEYWORDS = [
 
 interface BodaccRecord {
   id: string;
-  registre?: string;
+  registre?: string | string[];
   commercant?: string;
   typeavis?: string;
   familleavis?: string;
+  familleavis_lib?: string;
   dateparution?: string;
   ville?: string;
-  complementlegal?: string;
+  acte?: string | null;
+  numerodepartement?: string;
+  cp?: string;
+}
+
+function recordText(r: BodaccRecord): string {
+  return [r.commercant, r.familleavis, r.familleavis_lib, r.acte]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function extractActeSnippet(acte: string | null | undefined): string | null {
+  if (!acte) return null;
+  try {
+    const parsed = JSON.parse(acte) as { descriptif?: string };
+    return parsed.descriptif ?? acte;
+  } catch {
+    return acte;
+  }
 }
 
 function mapBodaccType(familleavis: string | undefined): SignalType {
@@ -44,7 +64,7 @@ function mapBodaccType(familleavis: string | undefined): SignalType {
 
 function detectTags(r: BodaccRecord): string[] {
   const tags: string[] = ["BODACC", "IDF"];
-  const text = [r.commercant, r.complementlegal].join(" ").toLowerCase();
+  const text = recordText(r);
   if (
     text.includes("private equity") ||
     text.includes("lbo") ||
@@ -63,28 +83,32 @@ function detectTags(r: BodaccRecord): string[] {
 }
 
 function isRelevant(r: BodaccRecord): boolean {
-  const text = [r.commercant, r.complementlegal, r.familleavis]
-    .join(" ")
-    .toLowerCase();
+  const text = recordText(r);
   return PE_MA_KEYWORDS.some((kw) => text.includes(kw));
 }
 
+/** Départements Île-de-France (champ API : numerodepartement). */
+const IDF_DEPARTMENTS_WHERE = `numerodepartement in ("75", "77", "78", "91", "92", "93", "94", "95")`;
+
 export async function fetchBodaccSignals(): Promise<number> {
   const params = new URLSearchParams({
-    where: `departement_code_insee in ("75","77","78","91","92","93","94","95")`,
+    where: IDF_DEPARTMENTS_WHERE,
     order_by: "dateparution DESC",
     limit: "100",
     select:
-      "id,registre,commercant,typeavis,familleavis,dateparution,ville,complementlegal",
+      "id,registre,commercant,typeavis,familleavis,familleavis_lib,dateparution,ville,acte,numerodepartement,cp",
   });
 
   const res = await fetch(
     `${BODACC_BASE}/annonces-commerciales/records?${params}`,
-    { next: { revalidate: 1800 } },
+    { cache: "no-store" },
   );
 
   if (!res.ok) {
-    throw new Error(`BODACC fetch failed: ${res.status}`);
+    const detail = await res.text().catch(() => "");
+    throw new Error(
+      `BODACC fetch failed: ${res.status}${detail ? ` — ${detail.slice(0, 200)}` : ""}`,
+    );
   }
 
   const data = (await res.json()) as { results?: BodaccRecord[] };
@@ -105,12 +129,13 @@ export async function fetchBodaccSignals(): Promise<number> {
           externalId: `bodacc-${r.id}`,
           sourceUrl,
           publishedAt,
-          title: `${r.familleavis ?? "Annonce"} — ${r.commercant}`,
-          snippet: r.complementlegal?.substring(0, 300) ?? null,
+          title: `${r.familleavis_lib ?? r.familleavis ?? "Annonce"} — ${r.commercant}`,
+          snippet: extractActeSnippet(r.acte)?.substring(0, 300) ?? null,
           companyName: r.commercant,
           signalType: mapBodaccType(r.familleavis),
-          tags: detectTags(r),
-          rawJson: r as unknown as Record<string, unknown>,
+          // tags et rawJson sérialisés en JSON pour SQLite
+          tags: JSON.stringify(detectTags(r)),
+          rawJson: JSON.stringify(r),
         })
         .onConflictDoNothing({ target: signalFeed.externalId });
       inserted++;

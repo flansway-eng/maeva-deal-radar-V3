@@ -54,9 +54,10 @@ async function logLeadEvent(params: {
   try {
     await db.insert(sequenceEvents).values({
       eventType: params.eventType,
-      actorId: params.actorId,
+      // actorId supprimé (non disponible en SQLite)
       note: params.note,
-      payload: params.payload ?? null,
+      // payload sérialisé en JSON pour SQLite
+      payload: params.payload ? JSON.stringify(params.payload) : null,
     });
   } catch {
     addFixtureEvent({

@@ -80,15 +80,17 @@ export async function runSignalFeedJob(): Promise<number> {
             title,
             snippet: result.content?.slice(0, 280) || null,
             signalType: inferSignalType(title),
-            relevanceScore: result.score.toFixed(2),
-            tags: categoryTags(query),
-            rawJson: result as unknown as Record<string, unknown>,
+            // relevanceScore est real en SQLite — convertir en number
+            relevanceScore: Number(result.score.toFixed(2)),
+            // tags et rawJson sérialisés en JSON pour SQLite
+            tags: JSON.stringify(categoryTags(query)),
+            rawJson: JSON.stringify(result),
           })
           .onConflictDoUpdate({
             target: signalFeed.sourceUrl,
             set: {
               fetchedAt: new Date(),
-              relevanceScore: result.score.toFixed(2),
+              relevanceScore: Number(result.score.toFixed(2)),
             },
           });
         inserted++;

@@ -27,7 +27,9 @@ export async function qualifyLead(
 
   if (!lead) return { error: "Lead introuvable" };
 
-  let pappersData: PappersCompany | null | undefined = lead.pappersData;
+  let pappersData: PappersCompany | null | undefined = lead.pappersData
+    ? ((): PappersCompany | null => { try { return JSON.parse(lead.pappersData as string); } catch { return null; } })()
+    : undefined;
   if (!pappersData && process.env.PAPPERS_API_KEY) {
     pappersData = await enrichLeadWithPappers(lead.companyName);
   }
@@ -68,13 +70,14 @@ export async function qualifyLead(
       await db
         .update(leads)
         .set({
-          confidenceScore: String(qualification.qualification_score),
-          qualificationData: qualification,
+          confidenceScore: Number(qualification.qualification_score),
+          // qualificationData et pappersData sérialisés en JSON pour SQLite
+          qualificationData: JSON.stringify(qualification),
           qualifiedAt: new Date(),
           ...(pappersData
             ? {
                 siren: pappersData.siren,
-                pappersData,
+                pappersData: JSON.stringify(pappersData),
                 formeJuridique: pappersData.forme_juridique ?? null,
                 capitalSocial: pappersData.capital ?? null,
               }

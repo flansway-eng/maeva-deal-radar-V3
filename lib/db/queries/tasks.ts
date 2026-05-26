@@ -1,6 +1,6 @@
 /**
  * Server-only Drizzle query functions for pipeline (read + journal).
- * Falls back to the static fixture when the DB returns 0 rows.
+ * DB uniquement — pas de fallback fixture automatique.
  */
 import { and, desc, eq, gte, lte, or } from "drizzle-orm";
 import { db } from "../index";
@@ -16,15 +16,35 @@ import {
 export type { FixtureTask, TaskStatus, TaskTrack };
 export type { TaskChannel, TaskStep } from "./seed-fixture";
 
-// ─── Filters ─────────────────────────────────────────────────────────────────
-
 export interface TaskFilters {
   track?: TaskTrack;
   status?: TaskStatus;
-  search?: string; // matches on company name (case-insensitive)
+  search?: string;
 }
 
-// ─── Get all tasks (Kanban / Liste) ─────────────────────────────────────────
+function mapRow(r: typeof sequenceTasks.$inferSelect): FixtureTask {
+  return {
+    id: r.id,
+    sequenceUid: r.sequenceUid,
+    createdAt: r.createdAt.toISOString(),
+    leadId: r.leadId ?? null,
+    company: r.company,
+    track: r.track as TaskTrack,
+    contactName: r.contactName ?? null,
+    title: r.title ?? null,
+    location: r.location ?? null,
+    source: r.source ?? null,
+    stepCode: r.stepCode as FixtureTask["stepCode"],
+    plannedDate: r.plannedDate,
+    channel: r.channel as FixtureTask["channel"],
+    messageSubject: r.messageSubject ?? null,
+    messageBody: r.messageBody ?? null,
+    status: r.status as TaskStatus,
+    executionNote: r.executionNote ?? null,
+    executedAt: r.executedAt ? r.executedAt.toISOString() : null,
+    stopReason: r.stopReason ?? null,
+  };
+}
 
 export async function getAllTasks(
   filters: TaskFilters = {},
@@ -34,46 +54,13 @@ export async function getAllTasks(
       .select()
       .from(sequenceTasks)
       .orderBy(desc(sequenceTasks.plannedDate));
-
-    if (rows.length === 0) {
-      // DB empty → use dev fixture
-      return applyFilters(FIXTURE_TASKS, filters);
-    }
-
-    // Map Drizzle rows to FixtureTask shape
-    const mapped: FixtureTask[] = rows.map((r) => ({
-      id: r.id,
-      sequenceUid: r.sequenceUid,
-      createdAt: r.createdAt.toISOString(),
-      leadId: r.leadId ?? null,
-      company: r.company,
-      track: r.track as TaskTrack,
-      contactName: r.contactName ?? null,
-      title: r.title ?? null,
-      location: r.location ?? null,
-      source: r.source ?? null,
-      stepCode: r.stepCode as FixtureTask["stepCode"],
-      plannedDate: r.plannedDate,
-      channel: r.channel as FixtureTask["channel"],
-      messageSubject: r.messageSubject ?? null,
-      messageBody: r.messageBody ?? null,
-      status: r.status as TaskStatus,
-      executionNote: r.executionNote ?? null,
-      executedAt: r.executedAt ? r.executedAt.toISOString() : null,
-      stopReason: r.stopReason ?? null,
-    }));
-
-    return applyFilters(mapped, filters);
+    return applyFilters(rows.map(mapRow), filters);
   } catch {
-    // DB not reachable yet (local dev without Supabase) → fallback
-    return applyFilters(FIXTURE_TASKS, filters);
+    return applyFilters([...FIXTURE_TASKS], filters);
   }
 }
 
-// ─── Get today's tasks (/today — Paris clock) ────────────────────────────────
-
 export async function getTodayTasks(): Promise<FixtureTask[]> {
-  // Use Europe/Paris date
   const todayParis = new Intl.DateTimeFormat("fr-FR", {
     timeZone: "Europe/Paris",
     year: "numeric",
@@ -83,7 +70,7 @@ export async function getTodayTasks(): Promise<FixtureTask[]> {
     .format(new Date())
     .split("/")
     .reverse()
-    .join("-"); // → YYYY-MM-DD
+    .join("-");
 
   try {
     const rows = await db
@@ -100,50 +87,19 @@ export async function getTodayTasks(): Promise<FixtureTask[]> {
       )
       .orderBy(sequenceTasks.channel, sequenceTasks.plannedDate);
 
-    if (rows.length === 0) {
-      return FIXTURE_TASKS.filter(
-        (t) =>
-          t.plannedDate === todayParis &&
-          (t.status === "PLANNED" || t.status === "POSTPONED"),
-      ).sort((a, b) => a.channel.localeCompare(b.channel));
-    }
-
-    return rows.map((r) => ({
-      id: r.id,
-      sequenceUid: r.sequenceUid,
-      createdAt: r.createdAt.toISOString(),
-      leadId: r.leadId ?? null,
-      company: r.company,
-      track: r.track as TaskTrack,
-      contactName: r.contactName ?? null,
-      title: r.title ?? null,
-      location: r.location ?? null,
-      source: r.source ?? null,
-      stepCode: r.stepCode as FixtureTask["stepCode"],
-      plannedDate: r.plannedDate,
-      channel: r.channel as FixtureTask["channel"],
-      messageSubject: r.messageSubject ?? null,
-      messageBody: r.messageBody ?? null,
-      status: r.status as TaskStatus,
-      executionNote: r.executionNote ?? null,
-      executedAt: r.executedAt ? r.executedAt.toISOString() : null,
-      stopReason: r.stopReason ?? null,
-    }));
+    return rows.map(mapRow);
   } catch {
-    const todayStr = new Date().toISOString().split("T")[0] as string;
     return FIXTURE_TASKS.filter(
       (t) =>
-        t.plannedDate === todayStr &&
+        t.plannedDate === todayParis &&
         (t.status === "PLANNED" || t.status === "POSTPONED"),
     ).sort((a, b) => a.channel.localeCompare(b.channel));
   }
 }
 
-// ─── Get tasks for calendar (month/year) ────────────────────────────────────
-
 export async function getCalendarTasks(
   year: number,
-  month: number, // 1-based
+  month: number,
 ): Promise<FixtureTask[]> {
   const firstDay = `${year}-${String(month).padStart(2, "0")}-01`;
   const lastDay = `${year}-${String(month).padStart(2, "0")}-${new Date(year, month, 0).getDate()}`;
@@ -159,41 +115,13 @@ export async function getCalendarTasks(
         ),
       );
 
-    if (rows.length === 0) {
-      return FIXTURE_TASKS.filter(
-        (t) => t.plannedDate >= firstDay && t.plannedDate <= lastDay,
-      );
-    }
-
-    return rows.map((r) => ({
-      id: r.id,
-      sequenceUid: r.sequenceUid,
-      createdAt: r.createdAt.toISOString(),
-      leadId: r.leadId ?? null,
-      company: r.company,
-      track: r.track as TaskTrack,
-      contactName: r.contactName ?? null,
-      title: r.title ?? null,
-      location: r.location ?? null,
-      source: r.source ?? null,
-      stepCode: r.stepCode as FixtureTask["stepCode"],
-      plannedDate: r.plannedDate,
-      channel: r.channel as FixtureTask["channel"],
-      messageSubject: r.messageSubject ?? null,
-      messageBody: r.messageBody ?? null,
-      status: r.status as TaskStatus,
-      executionNote: r.executionNote ?? null,
-      executedAt: r.executedAt ? r.executedAt.toISOString() : null,
-      stopReason: r.stopReason ?? null,
-    }));
+    return rows.map(mapRow);
   } catch {
     return FIXTURE_TASKS.filter(
       (t) => t.plannedDate >= firstDay && t.plannedDate <= lastDay,
     );
   }
 }
-
-// ─── Get recent journal events ───────────────────────────────────────────────
 
 export interface JournalEvent {
   id: string;
@@ -212,24 +140,12 @@ export async function getRecentEvents(limit = 200): Promise<JournalEvent[]> {
       .orderBy(desc(sequenceEvents.occurredAt))
       .limit(limit);
 
-    if (rows.length === 0) {
-      return FIXTURE_EVENTS.slice(0, limit).map((e) => ({
-        id: e.id,
-        occurredAt: e.occurredAt,
-        eventType: e.eventType,
-        taskId: e.taskId ?? null,
-        company: e.company ?? null,
-        note: e.note ?? null,
-      }));
-    }
-
-    // Join with task company name via the task relationship
     return rows.map((r) => ({
       id: r.id,
       occurredAt: r.occurredAt.toISOString(),
       eventType: r.eventType,
       taskId: r.taskId ?? null,
-      company: null, // populated by caller via task join if needed
+      company: null,
       note: r.note ?? null,
     }));
   } catch {
@@ -243,8 +159,6 @@ export async function getRecentEvents(limit = 200): Promise<JournalEvent[]> {
     }));
   }
 }
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function applyFilters(
   tasks: FixtureTask[],

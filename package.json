@@ -9,6 +9,10 @@
     "lint": "biome check",
     "format": "biome format --write",
     "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:verify": "node scripts/verify-db-tables.mjs",
     "db:seed": "node --experimental-strip-types scripts/seed-from-csv.ts"
   },
   "dependencies": {
@@ -24,6 +28,7 @@
     "@tiptap/react": "^3.23.6",
     "@tiptap/starter-kit": "^3.23.6",
     "ai": "^6.0.190",
+    "better-sqlite3": "^12.10.0",
     "cmdk": "^1.1.1",
     "drizzle-orm": "^0.45.2",
     "fast-xml-parser": "^5.8.0",
@@ -38,6 +43,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

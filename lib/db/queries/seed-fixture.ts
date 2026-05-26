@@ -2,9 +2,8 @@ import type { EventType } from "../schema";
 import { build100FixtureTasks } from "./fixture-100-tasks";
 
 /**
- * Dev-only seed fixture.
- * Injected by query functions when the DB returns 0 rows (empty Supabase instance).
- * Removed automatically once the real seed script runs in Phase 3.
+ * Stockage mémoire optionnel pour mutations sans DB (tests / dev).
+ * Jamais pré-rempli au démarrage — pas de seed automatique.
  */
 
 export type TaskStatus =
@@ -33,7 +32,7 @@ export interface FixtureTask {
   location: string | null;
   source: string | null;
   stepCode: TaskStep;
-  plannedDate: string; // ISO date YYYY-MM-DD
+  plannedDate: string;
   channel: TaskChannel;
   messageSubject: string | null;
   messageBody: string | null;
@@ -43,8 +42,8 @@ export interface FixtureTask {
   stopReason: string | null;
 }
 
-/** 100 tâches actives (Phase 3 acceptance). */
-export const FIXTURE_TASKS: FixtureTask[] = build100FixtureTasks();
+/** Vide par défaut — utiliser build100FixtureTasks() dans les tests si besoin. */
+export const FIXTURE_TASKS: FixtureTask[] = [];
 
 export interface FixtureEvent {
   id: string;
@@ -56,64 +55,7 @@ export interface FixtureEvent {
   note: string | null;
 }
 
-export const FIXTURE_EVENTS: FixtureEvent[] = [
-  {
-    id: "e1000000-0000-0000-0000-000000000001",
-    occurredAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    eventType: "TASK_DONE" as const,
-    taskId: "f1000000-0000-0000-0000-000000000006",
-    actorId: null,
-    company: "Eurazeo",
-    note: "Réponse positive reçue",
-  },
-  {
-    id: "e1000000-0000-0000-0000-000000000002",
-    occurredAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    eventType: "REVIEW_DECISION_APPLIED" as const,
-    taskId: null,
-    actorId: null,
-    company: "Ardian",
-    note: "Lead approuvé (KEEP)",
-  },
-  {
-    id: "e1000000-0000-0000-0000-000000000003",
-    occurredAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    eventType: "COMPANY_NORMALIZED" as const,
-    taskId: null,
-    actorId: null,
-    company: "12 leads",
-    note: "Normalisation automatique",
-  },
-  {
-    id: "e1000000-0000-0000-0000-000000000004",
-    occurredAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    eventType: "TASK_POSTPONED" as const,
-    taskId: "f1000000-0000-0000-0000-000000000010",
-    actorId: null,
-    company: "JP Morgan M&A",
-    note: "Nicolas en congés jusqu'au 1er juin",
-  },
-  {
-    id: "e1000000-0000-0000-0000-000000000005",
-    occurredAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
-    eventType: "TASK_DONE" as const,
-    taskId: "f1000000-0000-0000-0000-000000000012",
-    actorId: null,
-    company: "BNP Paribas CIB",
-    note: null,
-  },
-  {
-    id: "e1000000-0000-0000-0000-000000000006",
-    occurredAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-    eventType: "SEQUENCE_STOPPED" as const,
-    taskId: "f1000000-0000-0000-0000-000000000008",
-    actorId: null,
-    company: "Blackstone",
-    note: "Pas de réponse après 3 tentatives",
-  },
-];
-
-// ─── Phase 2 — mutations en mémoire (fallback sans DB) ───────────────────────
+export const FIXTURE_EVENTS: FixtureEvent[] = [];
 
 export function findFixtureTask(taskId: string): FixtureTask | undefined {
   return FIXTURE_TASKS.find((t) => t.id === taskId);
@@ -174,4 +116,10 @@ export function addFixtureEvent(event: {
     company: event.company,
     note: event.note,
   });
+}
+
+/** Utilitaire tests — charge 100 tâches en mémoire. */
+export function loadFixtureTasksForTests(): FixtureTask[] {
+  FIXTURE_TASKS.splice(0, FIXTURE_TASKS.length, ...build100FixtureTasks());
+  return FIXTURE_TASKS;
 }

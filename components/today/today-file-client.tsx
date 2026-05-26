@@ -8,6 +8,7 @@ import { postponeTask } from "@/app/(app)/pipeline/_actions/postpone-task";
 import { TodaySwipeList } from "@/components/pipeline/today-swipe-list";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ToastBanner, type ToastState } from "@/components/shared/toast-banner";
+import { TodayProgressRing } from "@/components/today/today-progress-ring";
 import { TodayTaskDrawer } from "@/components/today/today-task-drawer";
 import type { FixtureTask } from "@/lib/db/queries/tasks";
 import { addDaysIso, todayParisIso } from "@/lib/pipeline/dates";
@@ -149,16 +150,24 @@ export function TodayFileClient({
     <>
       <div className="max-w-lg mx-auto space-y-6 animate-fadeIn pb-12">
         <div className="border-b border-[#1F232B] pb-5">
-          <span className="text-[10px] font-mono text-[#4ADE80] uppercase tracking-widest font-bold">
-            MODE EXÉCUTION MOBILE
-          </span>
-          <h1
-            id="today-title"
-            className="text-2xl font-extrabold tracking-tight text-[#E8EAED] mt-1 capitalize"
-          >
-            {todayLabel}
-          </h1>
-          <p className="text-xs text-[#9AA0A6] mt-1">{summary}</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-mono text-[#4ADE80] uppercase tracking-widest font-bold">
+                MODE EXÉCUTION MOBILE
+              </span>
+              <h1
+                id="today-title"
+                className="text-2xl font-extrabold tracking-tight text-[#E8EAED] mt-1 capitalize"
+              >
+                {todayLabel}
+              </h1>
+              <p className="text-xs text-[#9AA0A6] mt-1">{summary}</p>
+            </div>
+            <TodayProgressRing
+              total={initialTasks.length}
+              treated={optimisticState.hiddenIds.size}
+            />
+          </div>
         </div>
 
         {total === 0 && exitingIds.size === 0 ? (

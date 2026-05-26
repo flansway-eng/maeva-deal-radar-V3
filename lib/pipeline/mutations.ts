@@ -24,9 +24,10 @@ async function logEvent(params: {
   const row = {
     eventType: params.eventType,
     taskId: params.taskId ?? null,
-    actorId: params.actorId,
+    // actorId supprimé (non disponible en SQLite sans auth Supabase)
     note: params.note ?? null,
-    payload: params.payload ?? null,
+    // payload sérialisé en JSON pour SQLite
+    payload: params.payload ? JSON.stringify(params.payload) : null,
   };
 
   try {
@@ -46,12 +47,12 @@ async function updateTaskInDb(
   patch: Partial<typeof sequenceTasks.$inferInsert>,
 ): Promise<boolean> {
   try {
-    const updated = await db
+    const result = await db
       .update(sequenceTasks)
       .set(patch)
       .where(eq(sequenceTasks.id, taskId))
-      .returning({ id: sequenceTasks.id });
-    return updated.length > 0;
+      .run();
+    return (result.changes ?? 0) > 0;
   } catch {
     return false;
   }

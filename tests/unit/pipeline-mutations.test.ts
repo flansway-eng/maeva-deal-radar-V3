@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   FIXTURE_TASKS,
   findFixtureTask,
+  loadFixtureTasksForTests,
   patchFixtureTask,
   stopFixtureCompanyInFixture,
 } from "@/lib/db/queries/seed-fixture";
@@ -9,6 +10,10 @@ import { addDaysIso } from "@/lib/pipeline/dates";
 
 describe("pipeline fixture mutations", () => {
   const sampleId = "f1000000-0000-0000-0000-000000000001";
+
+  beforeAll(() => {
+    loadFixtureTasksForTests();
+  });
 
   beforeEach(() => {
     patchFixtureTask(sampleId, {

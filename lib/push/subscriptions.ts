@@ -21,7 +21,8 @@ export async function savePushSubscription(input: {
   try {
     await db.insert(pushSubscriptions).values({
       endpoint: input.endpoint,
-      keys: input.keys,
+      // keys sérialisé en JSON pour SQLite
+      keys: JSON.stringify(input.keys),
     });
   } catch {
     const exists = FIXTURE_PUSH_SUBSCRIPTIONS.some(
@@ -38,17 +39,15 @@ export async function listPushSubscriptions(): Promise<
 > {
   try {
     const rows = await db.select().from(pushSubscriptions);
-    if (rows.length > 0) {
-      return rows.map((r) => ({
-        id: r.id,
-        endpoint: r.endpoint,
-        keys: r.keys,
-      }));
-    }
+    return rows.map((r) => ({
+      id: r.id,
+      endpoint: r.endpoint,
+      // keys désérialisé depuis JSON
+      keys: typeof r.keys === "string" ? JSON.parse(r.keys) : r.keys,
+    }));
   } catch {
-    // fixture
+    return [...FIXTURE_PUSH_SUBSCRIPTIONS];
   }
-  return FIXTURE_PUSH_SUBSCRIPTIONS;
 }
 
 export async function sendDailyBriefPushNotification(params: {

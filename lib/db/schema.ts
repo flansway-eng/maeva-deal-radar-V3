@@ -1,40 +1,13 @@
 import {
-  customType,
-  date,
   index,
   integer,
-  jsonb,
-  numeric,
-  pgSchema,
-  pgTable,
+  real,
+  sqliteTable,
   text,
-  timestamp,
   uniqueIndex,
-  uuid,
-} from "drizzle-orm/pg-core";
+} from "drizzle-orm/sqlite-core";
 
-// 5.0 — Reference to Supabase Auth Users table (auth.users)
-export const authSchema = pgSchema("auth");
-export const authUsers = authSchema.table("users", {
-  id: uuid("id").primaryKey().notNull(),
-});
-
-// pgvector — optional (migration 0002)
-const vector1536 = customType<{ data: number[]; driverData: string }>({
-  dataType() {
-    return "vector(1536)";
-  },
-  toDriver(value: number[]) {
-    return `[${value.join(",")}]`;
-  },
-  fromDriver(value: string) {
-    return value
-      .replace(/^\[/, "")
-      .replace(/\]$/, "")
-      .split(",")
-      .map(Number);
-  },
-});
+// ─── Types métier ─────────────────────────────────────────────────────────────
 
 export type SignalSource =
   | "BODACC"
@@ -80,19 +53,24 @@ export interface LeadQualificationData {
   timing: "URGENT" | "NORMAL" | "ATTENDRE";
   timing_raison: string;
 }
+
 export interface Signal {
   type: string;
   value: string;
   description?: string;
 }
 
-// 5.1 — web_discoveries (sources brutes du sourcing Tavily)
-export const webDiscoveries = pgTable(
+// ─── Helpers sérialisation ────────────────────────────────────────────────────
+// SQLite ne supporte pas JSONB ni ARRAY nativement.
+// Les colonnes JSON sont stockées en TEXT et sérialisées à l'écriture.
+
+// ─── 5.1 — web_discoveries ────────────────────────────────────────────────────
+export const webDiscoveries = sqliteTable(
   "web_discoveries",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .$defaultFn(() => new Date())
       .notNull(),
     sourceTitle: text("source_title").notNull(),
     sourceUrl: text("source_url").notNull(),
@@ -101,9 +79,10 @@ export const webDiscoveries = pgTable(
     pageType: text("page_type"), // fund_page | team_page | news | portfolio | other
     snippet: text("snippet"),
     extractedText: text("extracted_text"),
-    score: numeric("score", { precision: 5, scale: 2 }),
-    signals: jsonb("signals").$type<Signal[]>().default([]),
-    runId: uuid("run_id").references(() => sourcingRuns.id),
+    score: real("score"),
+    // JSON serialisé : Signal[]
+    signals: text("signals").default("[]"),
+    runId: text("run_id").references(() => sourcingRuns.id),
   },
   (t) => [
     index("web_discoveries_domain_idx").on(t.domain),
@@ -111,60 +90,64 @@ export const webDiscoveries = pgTable(
   ],
 );
 
-// 5.2 — sourcing_runs (un run = un déclenchement Tavily)
-export const sourcingRuns = pgTable("sourcing_runs", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  triggeredAt: timestamp("triggered_at", { withTimezone: true })
-    .defaultNow()
+// ─── 5.2 — sourcing_runs ─────────────────────────────────────────────────────
+export const sourcingRuns = sqliteTable("sourcing_runs", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  triggeredAt: integer("triggered_at", { mode: "timestamp_ms" })
+    .$defaultFn(() => new Date())
     .notNull(),
-  triggeredBy: uuid("triggered_by").references(() => authUsers.id),
-  queries: jsonb("queries").$type<string[]>().notNull(),
+  // triggeredBy: supprimé (référence auth.users Supabase — non disponible en SQLite)
+  // JSON serialisé : string[]
+  queries: text("queries").notNull(),
   status: text("status").$type<"RUNNING" | "DONE" | "FAILED">().notNull(),
   resultsCount: integer("results_count").default(0),
   errorMessage: text("error_message"),
 });
 
-// 5.3 — leads (issus du lead_builder)
-export const leads = pgTable("leads", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
+// ─── 5.3 — leads ─────────────────────────────────────────────────────────────
+export const leads = sqliteTable("leads", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .$defaultFn(() => new Date())
     .notNull(),
-  discoveryId: uuid("discovery_id").references(() => webDiscoveries.id),
-  companyName: text("company_name").notNull(), // normalisé
-  companyNameOriginal: text("company_name_original"), // brut avant normalisation
+  discoveryId: text("discovery_id").references(() => webDiscoveries.id),
+  companyName: text("company_name").notNull(),
+  companyNameOriginal: text("company_name_original"),
   website: text("website"),
   pageUrl: text("page_url"),
   geography: text("geography").default("Île-de-France"),
-  sector: text("sector"), // PE | MA | IB | TS
+  sector: text("sector"),
   track: text("track").$type<"PE" | "MA">().notNull(),
   targetRole: text("target_role"),
   personaName: text("persona_name"),
   personalizationFact: text("personalization_fact"),
   primarySignal: text("primary_signal"),
-  confidenceScore: numeric("confidence_score", { precision: 5, scale: 2 }),
+  confidenceScore: real("confidence_score"),
   reviewStatus: text("review_status")
     .$type<"PENDING" | "KEEP" | "STOP" | "CORRECT">()
     .default("PENDING"),
   siren: text("siren"),
   capitalSocial: integer("capital_social"),
   formeJuridique: text("forme_juridique"),
-  pappersData: jsonb("pappers_data").$type<PappersCompanyData>(),
-  qualificationData: jsonb("qualification_data").$type<LeadQualificationData>(),
-  qualifiedAt: timestamp("qualified_at", { withTimezone: true }),
-  embedding: vector1536("embedding"),
+  // JSON serialisé : PappersCompanyData
+  pappersData: text("pappers_data"),
+  // JSON serialisé : LeadQualificationData
+  qualificationData: text("qualification_data"),
+  qualifiedAt: integer("qualified_at", { mode: "timestamp_ms" }),
+  // embedding : stocké JSON sérialisé (vector(1536) non supporté en SQLite)
+  embedding: text("embedding"),
 });
 
-// 5.4 — sequence_tasks (table centrale du pilotage — équivalent maeva_sequence_tasks)
-export const sequenceTasks = pgTable(
+// ─── 5.4 — sequence_tasks ────────────────────────────────────────────────────
+export const sequenceTasks = sqliteTable(
   "sequence_tasks",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    sequenceUid: text("sequence_uid").notNull(), // clé technique unique (anti-collision)
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    sequenceUid: text("sequence_uid").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .$defaultFn(() => new Date())
       .notNull(),
-    leadId: uuid("lead_id").references(() => leads.id),
+    leadId: text("lead_id").references(() => leads.id),
     company: text("company").notNull(),
     track: text("track").$type<"PE" | "MA">().notNull(),
     contactName: text("contact_name"),
@@ -179,7 +162,7 @@ export const sequenceTasks = pgTable(
         | "STEP_3_FOLLOWUP_2_EMAIL"
       >()
       .notNull(),
-    plannedDate: date("planned_date").notNull(),
+    plannedDate: text("planned_date").notNull(), // ISO YYYY-MM-DD
     channel: text("channel").$type<"EMAIL" | "LINKEDIN">().notNull(),
     messageSubject: text("message_subject"),
     messageBody: text("message_body"),
@@ -188,7 +171,7 @@ export const sequenceTasks = pgTable(
       .default("PLANNED")
       .notNull(),
     executionNote: text("execution_note"),
-    executedAt: timestamp("executed_at", { withTimezone: true }),
+    executedAt: integer("executed_at", { mode: "timestamp_ms" }),
     stopReason: text("stop_reason"),
   },
   (t) => [
@@ -199,7 +182,7 @@ export const sequenceTasks = pgTable(
   ],
 );
 
-// EventType union
+// ─── EventType union ──────────────────────────────────────────────────────────
 export type EventType =
   | "CALENDAR_IMPORTED"
   | "SEQUENCE_STOPPED"
@@ -213,18 +196,19 @@ export type EventType =
   | "AI_DAILY_BRIEF_GENERATED"
   | "SOURCING_RUN_COMPLETED";
 
-// 5.5 — sequence_events (journal — équivalent maeva_sequence_events)
-export const sequenceEvents = pgTable(
+// ─── 5.5 — sequence_events ────────────────────────────────────────────────────
+export const sequenceEvents = sqliteTable(
   "sequence_events",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    occurredAt: timestamp("occurred_at", { withTimezone: true })
-      .defaultNow()
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    occurredAt: integer("occurred_at", { mode: "timestamp_ms" })
+      .$defaultFn(() => new Date())
       .notNull(),
     eventType: text("event_type").$type<EventType>().notNull(),
-    taskId: uuid("task_id").references(() => sequenceTasks.id),
-    actorId: uuid("actor_id").references(() => authUsers.id),
-    payload: jsonb("payload").$type<Record<string, unknown>>(),
+    taskId: text("task_id").references(() => sequenceTasks.id),
+    // actorId: supprimé (référence auth.users Supabase)
+    // JSON serialisé : Record<string, unknown>
+    payload: text("payload"),
     note: text("note"),
   },
   (t) => [
@@ -233,26 +217,26 @@ export const sequenceEvents = pgTable(
   ],
 );
 
-// 5.6 — review_decisions (file de revue humaine)
-export const reviewDecisions = pgTable("review_decisions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
+// ─── 5.6 — review_decisions ──────────────────────────────────────────────────
+export const reviewDecisions = sqliteTable("review_decisions", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .$defaultFn(() => new Date())
     .notNull(),
   source: text("source").notNull(),
   rawCompany: text("raw_company"),
   decision: text("decision").$type<"KEEP" | "STOP" | "CORRECT">().notNull(),
   correctedCompany: text("corrected_company"),
   reason: text("reason"),
-  appliedAt: timestamp("applied_at", { withTimezone: true }),
-  appliedBy: uuid("applied_by").references(() => authUsers.id),
+  appliedAt: integer("applied_at", { mode: "timestamp_ms" }),
+  // appliedBy: supprimé (référence auth.users Supabase)
 });
 
-// 5.7 — company_aliases (mapping URL/domain → nom normalisé canonique)
-export const companyAliases = pgTable(
+// ─── 5.7 — company_aliases ───────────────────────────────────────────────────
+export const companyAliases = sqliteTable(
   "company_aliases",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     domain: text("domain").notNull(),
     canonicalName: text("canonical_name").notNull(),
     track: text("track").$type<"PE" | "MA">(),
@@ -261,40 +245,43 @@ export const companyAliases = pgTable(
   (t) => [uniqueIndex("company_aliases_domain_unique").on(t.domain)],
 );
 
-// Phase 5 — daily_briefs
-export const dailyBriefs = pgTable(
+// ─── daily_briefs ─────────────────────────────────────────────────────────────
+export const dailyBriefs = sqliteTable(
   "daily_briefs",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    briefDate: date("brief_date").notNull(),
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    briefDate: text("brief_date").notNull(), // ISO YYYY-MM-DD
     contentMarkdown: text("content_markdown").notNull(),
-    generatedAt: timestamp("generated_at", { withTimezone: true })
-      .defaultNow()
+    generatedAt: integer("generated_at", { mode: "timestamp_ms" })
+      .$defaultFn(() => new Date())
       .notNull(),
   },
   (t) => [uniqueIndex("daily_briefs_date_unique").on(t.briefDate)],
 );
 
-// signal_feed — intelligence marché multi-sources (BODACC, RSS, Tavily)
-export const signalFeed = pgTable(
+// ─── signal_feed ──────────────────────────────────────────────────────────────
+export const signalFeed = sqliteTable(
   "signal_feed",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    fetchedAt: timestamp("fetched_at", { withTimezone: true })
-      .defaultNow()
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    fetchedAt: integer("fetched_at", { mode: "timestamp_ms" })
+      .$defaultFn(() => new Date())
       .notNull(),
-    publishedAt: timestamp("published_at", { withTimezone: true }),
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
     source: text("source").$type<SignalSource>().notNull(),
     sourceUrl: text("source_url"),
     title: text("title").notNull(),
     snippet: text("snippet"),
     companyName: text("company_name"),
     signalType: text("signal_type").$type<SignalType>(),
-    relevanceScore: numeric("relevance_score", { precision: 5, scale: 2 }),
-    tags: text("tags").array(),
-    rawJson: jsonb("raw_json").$type<Record<string, unknown>>(),
-    embedding: vector1536("embedding"),
-    leadId: uuid("lead_id").references(() => leads.id),
+    relevanceScore: real("relevance_score"),
+    // JSON serialisé : string[]
+    tags: text("tags"),
+    // JSON serialisé : Record<string, unknown>
+    rawJson: text("raw_json"),
+    // embedding stocké JSON (sans indexation vectorielle)
+    embedding: text("embedding"),
+    leadId: text("lead_id").references(() => leads.id),
     externalId: text("external_id"),
   },
   (t) => [
@@ -306,71 +293,74 @@ export const signalFeed = pgTable(
   ],
 );
 
-// Legacy — conservé pour compat migration ; ne plus alimenter
-export const signalFeedItems = pgTable(
+// ─── signal_feed_items (Legacy) ───────────────────────────────────────────────
+export const signalFeedItems = sqliteTable(
   "signal_feed_items",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .$defaultFn(() => new Date())
       .notNull(),
     title: text("title").notNull(),
     sourceUrl: text("source_url"),
     snippet: text("snippet"),
     category: text("category").$type<"PE" | "MA" | "MARKET">(),
-    score: numeric("score", { precision: 5, scale: 2 }),
-    publishedAt: timestamp("published_at", { withTimezone: true })
-      .defaultNow()
+    score: real("score"),
+    publishedAt: integer("published_at", { mode: "timestamp_ms" })
+      .$defaultFn(() => new Date())
       .notNull(),
   },
-  (t) => [index("signal_feed_published_idx").on(t.publishedAt)],
+  (t) => [index("sfi_published_idx").on(t.publishedAt)],
 );
 
-// Phase 5 — copilot
-export const copilotConversations = pgTable("copilot_conversations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
+// ─── copilot_conversations ───────────────────────────────────────────────────
+export const copilotConversations = sqliteTable("copilot_conversations", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .$defaultFn(() => new Date())
     .notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .$defaultFn(() => new Date())
     .notNull(),
   title: text("title").notNull(),
 });
 
-export const copilotMessages = pgTable(
+// ─── copilot_messages ────────────────────────────────────────────────────────
+export const copilotMessages = sqliteTable(
   "copilot_messages",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    conversationId: uuid("conversation_id")
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    conversationId: text("conversation_id")
       .references(() => copilotConversations.id)
       .notNull(),
     role: text("role").$type<"user" | "assistant" | "system">().notNull(),
     content: text("content").notNull(),
-    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
+    // JSON serialisé : Record<string, unknown>
+    metadata: text("metadata"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .$defaultFn(() => new Date())
       .notNull(),
   },
   (t) => [index("copilot_messages_conv_idx").on(t.conversationId)],
 );
 
-// Phase 5 — voice_notes
-export const voiceNotes = pgTable("voice_notes", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  taskId: uuid("task_id").references(() => sequenceTasks.id),
+// ─── voice_notes ─────────────────────────────────────────────────────────────
+export const voiceNotes = sqliteTable("voice_notes", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  taskId: text("task_id").references(() => sequenceTasks.id),
   transcript: text("transcript").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .$defaultFn(() => new Date())
     .notNull(),
 });
 
-// Phase 5 — push_subscriptions
-export const pushSubscriptions = pgTable("push_subscriptions", {
-  id: uuid("id").primaryKey().defaultRandom(),
+// ─── push_subscriptions ──────────────────────────────────────────────────────
+export const pushSubscriptions = sqliteTable("push_subscriptions", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   endpoint: text("endpoint").notNull(),
-  keys: jsonb("keys").$type<{ p256dh: string; auth: string }>().notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
+  // JSON serialisé : { p256dh: string; auth: string }
+  keys: text("keys").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .$defaultFn(() => new Date())
     .notNull(),
 });

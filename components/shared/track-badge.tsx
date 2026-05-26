@@ -13,8 +13,8 @@ export function TrackBadge({ track, size = "md" }: TrackBadgeProps) {
     <span
       className={`inline-flex items-center px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-widest ${textSize} ${
         isPE
-          ? "bg-[#F5C518]/10 text-[#F5C518] border border-[#F5C518]/20"
-          : "bg-[#5B8DEF]/10 text-[#5B8DEF] border border-[#5B8DEF]/20"
+          ? "bg-[#C4974C]/10 text-[#C4974C] border border-[#C4974C]/25"
+          : "bg-[#4472AA]/10 text-[#4472AA] border border-[#4472AA]/25"
       }`}
     >
       {track}

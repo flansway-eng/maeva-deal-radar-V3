@@ -92,8 +92,9 @@ export async function fetchRssSignals(): Promise<number> {
               title,
               snippet: description.substring(0, 400) || null,
               signalType: "NEWS",
-              tags: [feed.source === "RSS_BFM" ? "BFM" : "LEMONDE", "FR"],
-              rawJson: item as Record<string, unknown>,
+              // tags et rawJson sérialisés en JSON pour SQLite
+              tags: JSON.stringify([feed.source === "RSS_BFM" ? "BFM" : "LEMONDE", "FR"]),
+              rawJson: JSON.stringify(item),
             })
             .onConflictDoUpdate({
               target: signalFeed.sourceUrl,

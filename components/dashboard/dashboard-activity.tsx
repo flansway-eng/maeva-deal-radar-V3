@@ -2,10 +2,10 @@ import type { JournalEvent } from "@/lib/db/queries/tasks";
 
 const DOT_COLORS: Record<string, string> = {
   TASK_DONE: "bg-[#4ADE80]",
-  REVIEW_DECISION_APPLIED: "bg-[#F5C518]",
-  COMPANY_NORMALIZED: "bg-[#5B8DEF]",
-  AI_DAILY_BRIEF_GENERATED: "bg-[#F5C518]",
-  SEQUENCE_STOPPED: "bg-[#F87171]",
+  REVIEW_DECISION_APPLIED: "bg-[#C4974C]",
+  COMPANY_NORMALIZED: "bg-[#4472AA]",
+  AI_DAILY_BRIEF_GENERATED: "bg-[#C4974C]",
+  SEQUENCE_STOPPED: "bg-[#E07070]",
 };
 
 function formatRelative(iso: string): string {
@@ -45,30 +45,30 @@ export function DashboardActivity({ events }: DashboardActivityProps) {
   const slice = events.slice(0, 6);
 
   return (
-    <div className="bg-[#111317] border border-[#1F232B] rounded-xl p-6 shadow-sm">
-      <div className="flex items-center justify-between border-b border-[#1F232B] pb-4 mb-4">
-        <h2 className="text-xs font-mono font-bold tracking-wider text-[#E8EAED] uppercase">
+    <div className="bg-[#0C1A2E] border border-[#1A3050] rounded-lg p-6 shadow-sm">
+      <div className="flex items-center justify-between border-b border-[#1A3050] pb-4 mb-4">
+        <h2 className="text-[9px] font-mono font-bold tracking-[0.2em] text-[#EDE8DC] uppercase">
           JOURNAL D'ACTIVITÉ RÉCENTE
         </h2>
-        <span className="text-[9px] font-mono text-[#9AA0A6] uppercase bg-[#0A0B0D] border border-[#1F232B] px-2 py-0.5 rounded">
+        <span className="text-[8px] font-mono text-[#8899AE] uppercase bg-[#07101E] border border-[#1A3050] px-2 py-0.5 rounded tracking-wider">
           LATEST EVENTS
         </span>
       </div>
 
       <div className="space-y-4">
         {slice.length === 0 && (
-          <p className="text-xs text-[#9AA0A6]">Aucun événement récent.</p>
+          <p className="text-[11px] font-mono text-[#8899AE]">Aucun événement récent.</p>
         )}
         {slice.map((event) => (
-          <div key={event.id} className="flex items-start gap-3 text-xs">
+          <div key={event.id} className="flex items-start gap-3">
             <div
               className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
-                DOT_COLORS[event.eventType] ?? "bg-[#9AA0A6]"
+                DOT_COLORS[event.eventType] ?? "bg-[#8899AE]"
               }`}
             />
             <div>
-              <p className="text-[#E8EAED]">{describeEvent(event)}</p>
-              <span className="text-[10px] font-mono text-[#9AA0A6]">
+              <p className="text-[11px] text-[#EDE8DC] leading-relaxed">{describeEvent(event)}</p>
+              <span className="text-[9px] font-mono text-[#8899AE] tracking-wide">
                 {formatRelative(event.occurredAt)} · Système
               </span>
             </div>

@@ -24,8 +24,13 @@ function mapLeadRow(r: typeof leads.$inferSelect): FixtureLead {
     siren: r.siren ?? null,
     capitalSocial: r.capitalSocial ?? null,
     formeJuridique: r.formeJuridique ?? null,
-    pappersData: r.pappersData ?? null,
-    qualificationData: r.qualificationData ?? null,
+    // pappersData et qualificationData désérialisés depuis JSON (SQLite)
+    pappersData: r.pappersData
+      ? (() => { try { return JSON.parse(r.pappersData as string); } catch { return null; } })()
+      : null,
+    qualificationData: r.qualificationData
+      ? (() => { try { return JSON.parse(r.qualificationData as string); } catch { return null; } })()
+      : null,
     qualifiedAt: r.qualifiedAt?.toISOString() ?? null,
   };
 }
@@ -35,8 +40,8 @@ export async function getLeadsShortlist(): Promise<FixtureLead[]> {
 }
 
 export async function getLeadById(id: string): Promise<FixtureLead | null> {
-  const fixture = findFixtureLead(id);
-  if (fixture) return fixture;
+  const inMemory = findFixtureLead(id);
+  if (inMemory) return inMemory;
 
   try {
     const rows = await db
@@ -48,7 +53,7 @@ export async function getLeadById(id: string): Promise<FixtureLead | null> {
     if (!r) return null;
     return mapLeadRow(r);
   } catch {
-    return findFixtureLead(id) ?? null;
+    return null;
   }
 }
 

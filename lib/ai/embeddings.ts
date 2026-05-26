@@ -1,8 +1,8 @@
 import "server-only";
 
-import { sql } from "drizzle-orm";
+import { eq, isNull, like } from "drizzle-orm";
 import { db } from "@/lib/db";
-import type { leads, signalFeed } from "@/lib/db/schema";
+import { leads, signalFeed } from "@/lib/db/schema";
 
 export async function generateEmbedding(
   text: string,
@@ -44,12 +44,17 @@ export function leadToText(lead: typeof leads.$inferSelect): string {
 }
 
 export function signalToText(signal: typeof signalFeed.$inferSelect): string {
+  // tags stocké en JSON dans SQLite — parser
+  const tagsArr: string[] = (() => {
+    try { return typeof signal.tags === "string" ? JSON.parse(signal.tags) : []; }
+    catch { return []; }
+  })();
   return [
     signal.title,
     signal.companyName,
     signal.snippet,
     signal.signalType,
-    ...(signal.tags ?? []),
+    ...tagsArr,
   ]
     .filter(Boolean)
     .join(" — ");
@@ -63,53 +68,23 @@ export interface SemanticSearchResult {
   score: number;
 }
 
+/**
+ * Recherche sémantique — SQLite ne supporte pas pgvector.
+ * Retourne toujours un tableau vide (fonctionnalité non disponible en SQLite).
+ * Pour la recherche vectorielle, utilisez Supabase/PostgreSQL avec pgvector.
+ */
 export async function semanticSearch(
-  query: string,
-  limit = 10,
+  _query: string,
+  _limit = 10,
 ): Promise<SemanticSearchResult[]> {
-  const queryEmbedding = await generateEmbedding(query);
-  if (!queryEmbedding) return [];
-
-  const vectorStr = `[${queryEmbedding.join(",")}]`;
-
-  try {
-    const result = await db.execute(sql`
-      SELECT * FROM (
-        SELECT
-          'lead'::text AS entity_type,
-          id::text AS entity_id,
-          company_name AS title,
-          primary_signal AS snippet,
-          1 - (embedding <=> ${vectorStr}::vector) AS score
-        FROM leads
-        WHERE embedding IS NOT NULL
-        UNION ALL
-        SELECT
-          'signal'::text AS entity_type,
-          id::text AS entity_id,
-          title AS title,
-          snippet AS snippet,
-          1 - (embedding <=> ${vectorStr}::vector) AS score
-        FROM signal_feed
-        WHERE embedding IS NOT NULL
-      ) combined
-      ORDER BY score DESC
-      LIMIT ${limit}
-    `);
-
-    const rows = result as unknown as SemanticSearchResult[];
-    return rows.map((r) => ({
-      entityType: r.entityType === "lead" ? "lead" : "signal",
-      entityId: String(r.entityId),
-      title: String(r.title ?? ""),
-      snippet: r.snippet ? String(r.snippet) : null,
-      score: Number(r.score ?? 0),
-    }));
-  } catch {
-    return [];
-  }
+  console.warn("[embeddings] semanticSearch: pgvector non disponible en SQLite — retourne []");
+  return [];
 }
 
+/**
+ * Génération d'embeddings en batch — SQLite stocke les embeddings en JSON text.
+ * Les vecteurs sont stockés mais pas indexés (pas de recherche vectorielle).
+ */
 export async function generateEmbeddingsBatch(): Promise<number> {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) return 0;
@@ -117,61 +92,42 @@ export async function generateEmbeddingsBatch(): Promise<number> {
   let count = 0;
 
   try {
-    const leadRows = await db.execute(sql`
-      SELECT id, company_name, sector, target_role, primary_signal,
-             personalization_fact, geography
-      FROM leads
-      WHERE embedding IS NULL
-      LIMIT 20
-    `);
+    // Leads sans embedding
+    const leadRows = await db
+      .select()
+      .from(leads)
+      .where(isNull(leads.embedding))
+      .limit(20);
 
-    for (const row of leadRows as unknown as Record<string, unknown>[]) {
-      const text = [
-        row.company_name,
-        row.sector,
-        row.target_role,
-        row.primary_signal,
-        row.personalization_fact,
-        row.geography,
-      ]
-        .filter(Boolean)
-        .join(" — ");
-      const embedding = await generateEmbedding(String(text));
+    for (const row of leadRows) {
+      const text = leadToText(row);
+      const embedding = await generateEmbedding(text);
       if (!embedding) continue;
 
-      const vectorStr = `[${embedding.join(",")}]`;
-      await db.execute(sql`
-        UPDATE leads SET embedding = ${vectorStr}::vector
-        WHERE id = ${row.id}::uuid
-      `);
+      // Stocker l'embedding comme JSON text dans SQLite
+      await db
+        .update(leads)
+        .set({ embedding: JSON.stringify(embedding) })
+        .where(eq(leads.id, row.id));
       count++;
     }
 
-    const signalRows = await db.execute(sql`
-      SELECT id, title, company_name, snippet, signal_type, tags
-      FROM signal_feed
-      WHERE embedding IS NULL
-      LIMIT 20
-    `);
+    // Signaux sans embedding
+    const signalRows = await db
+      .select()
+      .from(signalFeed)
+      .where(isNull(signalFeed.embedding))
+      .limit(20);
 
-    for (const row of signalRows as unknown as Record<string, unknown>[]) {
-      const text = [
-        row.title,
-        row.company_name,
-        row.snippet,
-        row.signal_type,
-        Array.isArray(row.tags) ? (row.tags as string[]).join(" ") : null,
-      ]
-        .filter(Boolean)
-        .join(" — ");
-      const embedding = await generateEmbedding(String(text));
+    for (const row of signalRows) {
+      const text = signalToText(row);
+      const embedding = await generateEmbedding(text);
       if (!embedding) continue;
 
-      const vectorStr = `[${embedding.join(",")}]`;
-      await db.execute(sql`
-        UPDATE signal_feed SET embedding = ${vectorStr}::vector
-        WHERE id = ${row.id}::uuid
-      `);
+      await db
+        .update(signalFeed)
+        .set({ embedding: JSON.stringify(embedding) })
+        .where(eq(signalFeed.id, row.id));
       count++;
     }
   } catch {

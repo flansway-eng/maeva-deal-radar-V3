@@ -59,9 +59,10 @@ export async function batchRegenerateMessages(
   try {
     await db.insert(sequenceEvents).values({
       eventType: "MESSAGES_REGENERATED",
-      actorId: user.id,
+      // actorId supprimé (non disponible en SQLite)
       note: `Régénération batch — ${count} message(s)`,
-      payload: { taskIds: parsed.data.taskIds, count },
+      // payload sérialisé en JSON pour SQLite
+      payload: JSON.stringify({ taskIds: parsed.data.taskIds, count }),
     });
   } catch {
     addFixtureEvent({

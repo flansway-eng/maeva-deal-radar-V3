@@ -6,9 +6,9 @@ const STATUS_CONFIG: Record<
 > = {
   PLANNED: {
     label: "Planifié",
-    bg: "bg-[#9AA0A6]/10",
-    text: "text-[#9AA0A6]",
-    dot: "bg-[#9AA0A6]",
+    bg: "bg-[#8899AE]/10",
+    text: "text-[#8899AE]",
+    dot: "bg-[#8899AE]",
   },
   DONE: {
     label: "Fait",
@@ -18,21 +18,21 @@ const STATUS_CONFIG: Record<
   },
   POSTPONED: {
     label: "Reporté",
-    bg: "bg-[#FBBF24]/10",
-    text: "text-[#FBBF24]",
-    dot: "bg-[#FBBF24]",
+    bg: "bg-[#C4974C]/10",
+    text: "text-[#C4974C]",
+    dot: "bg-[#C4974C]",
   },
   CANCELLED: {
     label: "Annulé",
-    bg: "bg-[#F87171]/10",
-    text: "text-[#F87171]",
-    dot: "bg-[#F87171]",
+    bg: "bg-[#E07070]/10",
+    text: "text-[#E07070]",
+    dot: "bg-[#E07070]",
   },
   STOPPED: {
     label: "Arrêté",
-    bg: "bg-[#71717A]/10",
-    text: "text-[#71717A]",
-    dot: "bg-[#71717A]",
+    bg: "bg-[#4E6070]/10",
+    text: "text-[#4E6070]",
+    dot: "bg-[#4E6070]",
   },
 };
 

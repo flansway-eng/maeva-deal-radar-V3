@@ -1,18 +1,15 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import Database from "better-sqlite3";
 import * as schema from "./schema";
+import path from "node:path";
 
-const connectionString = process.env.DATABASE_URL;
+// Chemin absolu vers la base SQLite locale
+const dbPath =
+  process.env.SQLITE_DB_PATH ?? path.join(process.cwd(), "local.db");
 
-// Secure configuration fallback for local tests or non-production environment
-const getConnectionString = () => {
-  if (connectionString) return connectionString;
-  // TODO(security): Ensure raw database URL is not hardcoded here
-  console.warn("DATABASE_URL is missing. Using local test connection string.");
-  return "postgres://postgres:postgres@localhost:5432/postgres";
-};
+const sqlite = new Database(dbPath);
 
-const finalConnectionString = getConnectionString();
+// Active le mode WAL pour de meilleures performances en concurrence
+sqlite.pragma("journal_mode = WAL");
 
-export const client = postgres(finalConnectionString, { prepare: false });
-export const db = drizzle(client, { schema });
+export const db = drizzle(sqlite, { schema });

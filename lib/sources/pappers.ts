@@ -61,7 +61,8 @@ export async function enrichLeadById(
         siren: data.siren,
         capitalSocial: data.capital ?? null,
         formeJuridique: data.forme_juridique ?? null,
-        pappersData: data,
+        // pappersData sérialisé en JSON pour SQLite
+        pappersData: JSON.stringify(data),
       })
       .where(eq(leads.id, leadId));
   } catch {
@@ -97,7 +98,8 @@ export async function enrichPendingLeads(): Promise<number> {
           siren: data.siren,
           capitalSocial: data.capital ?? null,
           formeJuridique: data.forme_juridique ?? null,
-          pappersData: data,
+          // pappersData sérialisé en JSON pour SQLite
+          pappersData: JSON.stringify(data),
         })
         .where(eq(leads.id, lead.id));
       count++;

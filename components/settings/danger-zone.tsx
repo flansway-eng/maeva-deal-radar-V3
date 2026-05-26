@@ -58,7 +58,7 @@ export function DangerZone() {
           onClick={() => setOpen(true)}
           className="px-4 py-2 rounded-lg text-xs font-bold font-mono border border-[#F87171]/40 text-[#F87171] bg-[#F87171]/10 hover:bg-[#F87171]/20 transition-colors cursor-pointer"
         >
-          Réinitialiser toutes les données
+          Vider toutes les données
         </button>
       </section>
 
@@ -80,7 +80,7 @@ export function DangerZone() {
               id="reset-dialog-title"
               className="text-base font-extrabold text-[#E8EAED]"
             >
-              Réinitialiser toutes les données ?
+              Vider toutes les données ?
             </h3>
             <p className="mt-2 text-xs text-[#9AA0A6] leading-relaxed">
               Cette action est irréversible. Toutes les tâches, leads, runs de

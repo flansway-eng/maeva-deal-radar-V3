@@ -213,7 +213,7 @@ function KanbanCard({
         isDragging
           ? "opacity-90 shadow-lg border-[#5B8DEF]/40 scale-[1.02]"
           : "hover:border-[#2A2F3A] hover:-translate-y-0.5"
-      } ${isOverdue ? "border-[#F87171]/30" : "border-[#1F232B]"}`}
+      } ${isOverdue ? "border-[#F87171]/40 animate-overdue-pulse" : "border-[#1F232B]"}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
@@ -236,13 +236,20 @@ function KanbanCard({
       <StepLabel stepCode={task.stepCode} channel={task.channel} />
 
       <div className="flex items-center justify-between">
-        <span
-          className={`text-[10px] font-mono ${
-            isOverdue ? "text-[#F87171]" : "text-[#9AA0A6]"
-          }`}
-        >
-          {isOverdue ? "⚠ " : ""}
-          {formatDate(task.plannedDate)}
+        <span className="flex items-center gap-1.5">
+          {isOverdue && (
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F87171] opacity-60" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F87171]" />
+            </span>
+          )}
+          <span
+            className={`text-[10px] font-mono ${
+              isOverdue ? "text-[#F87171]" : "text-[#9AA0A6]"
+            }`}
+          >
+            {formatDate(task.plannedDate)}
+          </span>
         </span>
         {task.executionNote && (
           <span className="text-[10px] text-[#9AA0A6] italic truncate max-w-[100px]">

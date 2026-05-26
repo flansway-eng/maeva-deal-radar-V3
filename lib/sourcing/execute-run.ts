@@ -43,10 +43,11 @@ export async function executeSourcingRun(
   try {
     await db.insert(sourcingRuns).values({
       id: runId,
-      queries: input.queries,
+      // queries sérialisé en JSON pour SQLite
+      queries: JSON.stringify(input.queries),
       status: "RUNNING",
       resultsCount: 0,
-      triggeredBy: input.actorId,
+      // triggeredBy supprimé (référence auth.users non disponible en SQLite)
     });
   } catch {
     // fixture fallback
@@ -112,14 +113,16 @@ export async function executeSourcingRun(
             companyNameRaw: d.companyNameRaw,
             pageType: d.pageType,
             snippet: d.snippet,
-            score: d.score,
+            // score est real en SQLite — convertir en number
+            score: typeof d.score === "string" ? Number(d.score) : d.score,
           })
           .onConflictDoUpdate({
             target: webDiscoveries.sourceUrl,
             set: {
               sourceTitle: d.sourceTitle,
               snippet: d.snippet,
-              score: d.score,
+              // score est real en SQLite — convertir en number
+              score: typeof d.score === "string" ? Number(d.score) : d.score,
               runId,
               domain: d.domain,
               companyNameRaw: d.companyNameRaw,
@@ -130,7 +133,7 @@ export async function executeSourcingRun(
 
       await db.insert(sequenceEvents).values({
         eventType: "SOURCING_RUN_COMPLETED",
-        actorId: input.actorId,
+        // actorId supprimé (non disponible en SQLite)
         note: `Sourcing run ${runId} — ${deduped.length} découvertes`,
       });
     } catch {

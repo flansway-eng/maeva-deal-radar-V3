@@ -21,20 +21,23 @@ export default async function AppLayout({
   const paletteTasks = await getAllTasks();
 
   return (
-    <div className="flex min-h-screen bg-[#0A0B0D] text-[#E8EAED] font-sans">
+    <div className="flex min-h-screen bg-[#07101E] text-[#EDE8DC]" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
       {/* Sidebar wrapper */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-[#1F232B] bg-[#111317] shrink-0">
+      <aside className="hidden md:flex w-64 flex-col border-r border-[#1A3050] bg-[#0C1A2E] shrink-0">
         {/* Sidebar Header */}
-        <div className="h-16 flex items-center gap-2.5 px-6 border-b border-[#1F232B] relative">
-          {/* Accent Gold/Blue visual bar */}
-          <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[#F5C518] to-[#5B8DEF]" />
-          <Sparkles className="w-5 h-5 text-[#F5C518]" />
+        <div className="h-16 flex items-center gap-2.5 px-6 border-b border-[#1A3050] relative">
+          {/* Filet d'or Rothschild */}
+          <div className="absolute left-0 top-0 bottom-0 w-[2px] roth-accent-bar" />
+          <Sparkles className="w-4 h-4 text-[#C4974C] shrink-0" />
           <div>
-            <span className="font-extrabold tracking-tight text-sm text-[#E8EAED]">
+            <span
+              className="font-bold tracking-[0.12em] text-[11px] text-[#EDE8DC] uppercase"
+              style={{ fontFamily: "var(--font-inter), sans-serif" }}
+            >
               DEAL RADAR
             </span>
-            <span className="block text-[9px] font-mono text-[#9AA0A6] tracking-widest uppercase">
-              ROOM v2.0
+            <span className="block text-[8px] font-mono text-[#8899AE] tracking-[0.2em] uppercase mt-px">
+              ROOM · PRIVATE
             </span>
           </div>
         </div>
@@ -46,25 +49,25 @@ export default async function AppLayout({
       {/* Main viewport */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header toolbar */}
-        <header className="h-16 flex items-center justify-between px-6 bg-[#111317] border-b border-[#1F232B] z-10 shrink-0">
+        <header className="h-16 flex items-center justify-between px-6 bg-[#0C1A2E] border-b border-[#1A3050] z-10 shrink-0">
           <div className="flex items-center gap-4">
-            <span className="text-xs font-mono text-[#9AA0A6] bg-[#0A0B0D] px-2.5 py-1 rounded border border-[#1F232B]">
+            <span className="text-[10px] font-mono text-[#8899AE] bg-[#07101E] px-2.5 py-1 rounded border border-[#1A3050] tracking-wider">
               PARIS / ÎLE-DE-FRANCE
             </span>
           </div>
 
-          {/* Interactive Search Bar / Command Palette placeholder */}
+          {/* Interactive Search Bar / Command Palette */}
           <div className="flex items-center gap-3">
             <button
               id="cmd-k-trigger-btn"
               type="button"
-              className="flex items-center gap-5 px-3 py-1.5 bg-[#0A0B0D] border border-[#1F232B] rounded-lg text-xs text-[#9AA0A6] hover:text-[#E8EAED] hover:border-[#9AA0A6]/30 transition-all font-mono cursor-pointer"
+              className="flex items-center gap-5 px-3 py-1.5 bg-[#07101E] border border-[#1A3050] rounded-lg text-[11px] text-[#8899AE] hover:text-[#EDE8DC] hover:border-[#C4974C]/40 transition-all font-mono cursor-pointer"
             >
               <div className="flex items-center gap-1.5">
-                <Search className="w-3.5 h-3.5 text-[#9AA0A6]" />
+                <Search className="w-3.5 h-3.5 text-[#8899AE]" />
                 <span>Rechercher...</span>
               </div>
-              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#16191F] border border-[#1F232B] rounded text-[10px] text-[#9AA0A6]">
+              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#112240] border border-[#1A3050] rounded text-[9px] text-[#8899AE]">
                 <Command className="w-2.5 h-2.5" />
                 <span>K</span>
               </kbd>

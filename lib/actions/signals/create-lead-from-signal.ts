@@ -34,9 +34,15 @@ export async function createLeadFromSignal(
     signal.title.split("—")[0]?.trim() ||
     signal.title.slice(0, 80);
 
+  // tags stocké en JSON dans SQLite — parser avant usage
+  const tagsArr: string[] = (() => {
+    try { return typeof signal.tags === "string" ? JSON.parse(signal.tags) : []; }
+    catch { return []; }
+  })();
+
   const track =
-    signal.tags?.includes("PE") || signal.tags?.includes("MA")
-      ? signal.tags.includes("MA")
+    tagsArr.includes("PE") || tagsArr.includes("MA")
+      ? tagsArr.includes("MA")
         ? "MA"
         : "PE"
       : "PE";
@@ -45,14 +51,15 @@ export async function createLeadFromSignal(
 
   try {
     await db.insert(leads).values({
-      id: leadId,
+      id: leadId, // id explicite pour pouvoir le référencer dans l'update signalFeed
       companyName,
       companyNameOriginal: companyName,
       pageUrl: signal.sourceUrl,
       track: track as "PE" | "MA",
       primarySignal: signal.title,
       reviewStatus: "PENDING",
-      confidenceScore: signal.relevanceScore ?? "0.5",
+      // confidenceScore est real en SQLite — convertir en number
+      confidenceScore: signal.relevanceScore != null ? Number(signal.relevanceScore) : 0.5,
     });
 
     await db

@@ -7,11 +7,12 @@ import {
   Check,
   Download,
   Eye,
-  MessageSquare,
+  Loader2,
   MoreHorizontal,
   Octagon,
   Pencil,
   Search,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -22,11 +23,13 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ToastBanner, type ToastState } from "@/components/shared/toast-banner";
 import { TrackBadge } from "@/components/shared/track-badge";
 import {
+  bulkGenerateSequence,
   bulkMarkLeadsKeep,
   bulkMarkLeadsStop,
 } from "@/lib/actions/leads/bulk-lead-actions";
 import { correctLeadCompany } from "@/lib/actions/leads/correct-lead-company";
-import { generateMessagesForLead } from "@/lib/actions/leads/generate-messages";
+import { GenerateSequenceButton } from "@/components/leads/generate-sequence-button";
+import { generateSequence } from "@/lib/actions/leads/generate-sequence";
 import { enrichLeadAction } from "@/lib/actions/leads/enrich-lead-pappers";
 import { markLeadKeep } from "@/lib/actions/leads/mark-lead-keep";
 import { markLeadStop } from "@/lib/actions/leads/mark-lead-stop";
@@ -226,6 +229,15 @@ export function LeadsShortlist({
   };
 
   const selectedIds = Array.from(selected);
+
+  const allSelectedAreKeep = useMemo(
+    () =>
+      selected.size > 0 &&
+      Array.from(selected).every(
+        (id) => leads.find((l) => l.id === id)?.reviewStatus === "KEEP",
+      ),
+    [selected, leads],
+  );
 
   const SortIcon = ({ col }: { col: SortKey }) => {
     if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 opacity-40" />;
@@ -446,6 +458,13 @@ export function LeadsShortlist({
                     {lead.primarySignal ?? "—"}
                   </td>
                   <td className="px-4 py-2.5 text-right relative">
+                    <div className="inline-flex items-center justify-end gap-2">
+                      {lead.reviewStatus === "KEEP" && (
+                        <GenerateSequenceButton
+                          leadId={lead.id}
+                          companyName={lead.companyName}
+                        />
+                      )}
                     <button
                       type="button"
                       disabled={pending}
@@ -457,6 +476,7 @@ export function LeadsShortlist({
                     >
                       <MoreHorizontal className="w-4 h-4" />
                     </button>
+                    </div>
                     {menuLeadId === lead.id && (
                       <>
                         <button
@@ -496,22 +516,25 @@ export function LeadsShortlist({
                               setCorrectName(lead.companyName);
                             }}
                           />
-                          <MenuItem
-                            icon={
-                              <MessageSquare className="w-3.5 h-3.5 text-[#F5C518]" />
-                            }
-                            label="Générer messages"
-                            onClick={() =>
-                              runAction(async () => {
-                                const r = await generateMessagesForLead({
-                                  leadId: lead.id,
-                                });
-                                return r.ok
-                                  ? { ok: true, message: r.message }
-                                  : { ok: false, error: r.error };
-                              })
-                            }
-                          />
+                          {lead.reviewStatus === "KEEP" && (
+                            <MenuItem
+                              icon={
+                                <Zap className="w-3.5 h-3.5 text-[#F5C518]" />
+                              }
+                              label="Générer séquence"
+                              onClick={() =>
+                                runAction(async () => {
+                                  const r = await generateSequence(lead.id);
+                                  return r.ok
+                                    ? {
+                                        ok: true as const,
+                                        message: `${r.created} tâches créées pour ${r.companyName}`,
+                                      }
+                                    : { ok: false as const, error: r.error };
+                                })
+                              }
+                            />
+                          )}
                           {lead.reviewStatus === "KEEP" && hasPappersKey && (
                             <MenuItem
                               icon={
@@ -587,6 +610,40 @@ export function LeadsShortlist({
           >
             Exporter sélection
           </button>
+          {allSelectedAreKeep && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() =>
+                startTransition(async () => {
+                  const result = await bulkGenerateSequence({
+                    leadIds: selectedIds,
+                  });
+                  if (result.ok) {
+                    setToast({
+                      variant: "success",
+                      message:
+                        result.created > 0
+                          ? `${result.created} tâche${result.created > 1 ? "s" : ""} créée${result.created > 1 ? "s" : ""}`
+                          : "Séquences déjà existantes",
+                    });
+                    setSelected(new Set());
+                    refresh();
+                  } else {
+                    setToast({ variant: "error", message: result.error });
+                  }
+                })
+              }
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold bg-[#F5C518]/20 text-[#F5C518] border border-[#F5C518]/40 rounded-md cursor-pointer disabled:opacity-50"
+            >
+              {pending ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Zap className="w-3 h-3" />
+              )}
+              Générer séquences
+            </button>
+          )}
         </div>
       )}
 

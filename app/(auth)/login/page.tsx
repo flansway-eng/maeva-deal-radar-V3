@@ -1,8 +1,11 @@
 "use client";
 
-import { ArrowRight, Loader2, Mail, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Code2, Loader2, Mail, ShieldCheck, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { devLogin } from "@/app/(auth)/login/_actions/dev-login";
 import { createClient } from "@/lib/auth/client";
+
+const isDev = process.env.NODE_ENV === "development";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -156,6 +159,19 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          {isDev && (
+            <form action={devLogin} className="mt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-dashed border-[#5B8DEF]/40 bg-[#5B8DEF]/5 text-[#5B8DEF] font-semibold text-xs rounded-lg hover:bg-[#5B8DEF]/10 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <Code2 className="w-3.5 h-3.5" />
+                Accès développeur
+              </button>
+            </form>
+          )}
 
           {/* Feedback Messages */}
           {message && (

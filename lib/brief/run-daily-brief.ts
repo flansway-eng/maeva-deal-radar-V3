@@ -72,7 +72,7 @@ export async function runDailyBriefJob(
   try {
     await db.insert(sequenceEvents).values({
       eventType: "AI_DAILY_BRIEF_GENERATED",
-      actorId,
+      // actorId supprimé (non disponible en SQLite)
       note: `Daily brief ${today}`,
     });
   } catch {

@@ -25,23 +25,23 @@ function sourceBadge(source: SignalSource): {
   const map: Record<SignalSource, { label: string; className: string }> = {
     BODACC: {
       label: "BODACC",
-      className: "bg-[#A78BFA]/15 text-[#A78BFA] border-[#A78BFA]/30",
+      className: "bg-[#7B68C8]/12 text-[#9A8AE0] border-[#7B68C8]/25",
     },
     RSS_BFM: {
       label: "BFM",
-      className: "bg-[#EF4444]/15 text-[#EF4444] border-[#EF4444]/30",
+      className: "bg-[#E07070]/12 text-[#E07070] border-[#E07070]/25",
     },
     RSS_LEMONDE: {
       label: "LE MONDE",
-      className: "bg-[#5B8DEF]/15 text-[#5B8DEF] border-[#5B8DEF]/30",
+      className: "bg-[#4472AA]/12 text-[#4472AA] border-[#4472AA]/25",
     },
     PAPPERS: {
       label: "PAPPERS",
-      className: "bg-[#9AA0A6]/15 text-[#9AA0A6] border-[#9AA0A6]/30",
+      className: "bg-[#8899AE]/12 text-[#8899AE] border-[#8899AE]/25",
     },
     TAVILY: {
       label: "TAVILY",
-      className: "bg-[#F5C518]/15 text-[#F5C518] border-[#F5C518]/30",
+      className: "bg-[#C4974C]/12 text-[#C4974C] border-[#C4974C]/25",
     },
   };
   return map[source];
@@ -93,21 +93,21 @@ export function DashboardSignalFeed({ signals }: DashboardSignalFeedProps) {
 
   return (
     <>
-      <div className="bg-[#111317] border border-[#1F232B] rounded-xl p-6 shadow-sm">
-        <div className="flex items-center justify-between border-b border-[#1F232B] pb-4 mb-4">
+      <div className="bg-[#0C1A2E] border border-[#1A3050] rounded-lg p-6 shadow-sm">
+        <div className="flex items-center justify-between border-b border-[#1A3050] pb-4 mb-4">
           <p className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#4ADE80]" />
-            <span className="text-xs font-mono font-bold tracking-wider text-[#E8EAED] uppercase">
-              SIGNAL FEED — L&apos;ACTUALITÉ DU MARCHÉ
+            <TrendingUp className="w-3.5 h-3.5 text-[#4ADE80]" />
+            <span className="text-[9px] font-mono font-bold tracking-[0.2em] text-[#EDE8DC] uppercase">
+              SIGNAL FEED — ACTUALITÉ MARCHÉ
             </span>
           </p>
-          <span className="text-[9px] font-mono text-[#9AA0A6] uppercase bg-[#0A0B0D] border border-[#1F232B] px-2 py-0.5 rounded">
+          <span className="text-[8px] font-mono text-[#8899AE] uppercase bg-[#07101E] border border-[#1A3050] px-2 py-0.5 rounded tracking-wider">
             SOURCES VÉRIFIÉES
           </span>
         </div>
 
         {verified.length === 0 ? (
-          <p className="text-xs text-[#9AA0A6] leading-relaxed">
+          <p className="text-[11px] text-[#8899AE] leading-relaxed font-mono">
             Aucun signal de marché pour l&apos;instant.
             <br />
             Le Signal Feed se mettra à jour lors du prochain run Tavily.
@@ -121,22 +121,22 @@ export function DashboardSignalFeed({ signals }: DashboardSignalFeedProps) {
                   key={item.id}
                   className={
                     i < verified.length - 1
-                      ? "border-b border-[#1F232B]/50 pb-3"
+                      ? "border-b border-[#1A3050]/60 pb-3"
                       : ""
                   }
                 >
                   <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span
-                        className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border ${badge.className}`}
+                        className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border tracking-wider ${badge.className}`}
                       >
                         {badge.label}
                       </span>
-                      <span className="text-[9px] font-mono text-[#9AA0A6] uppercase border border-[#1F232B] px-1.5 py-0.5 rounded">
+                      <span className="text-[8px] font-mono text-[#8899AE] uppercase border border-[#1A3050] px-1.5 py-0.5 rounded tracking-wider">
                         {signalTypeLabel(item.signalType)}
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono text-[#9AA0A6]">
+                    <span className="text-[9px] font-mono text-[#8899AE]">
                       {formatRelative(item.publishedAt)}
                     </span>
                   </div>
@@ -145,21 +145,21 @@ export function DashboardSignalFeed({ signals }: DashboardSignalFeedProps) {
                     href={item.sourceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs font-bold text-[#E8EAED] hover:text-[#5B8DEF] transition-colors inline-flex items-start gap-1"
+                    className="text-[12px] font-semibold text-[#EDE8DC] hover:text-[#C4974C] transition-colors inline-flex items-start gap-1"
                   >
                     <span>{item.title}</span>
-                    <ExternalLink className="w-3 h-3 shrink-0 mt-0.5 opacity-60" />
+                    <ExternalLink className="w-3 h-3 shrink-0 mt-0.5 opacity-50" />
                   </a>
                   <a
                     href={item.sourceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-0.5 block text-[10px] font-mono text-[#5B8DEF] hover:underline truncate"
+                    className="mt-0.5 block text-[9px] font-mono text-[#4472AA] hover:underline truncate"
                   >
                     {sourceHostname(item.sourceUrl)}
                   </a>
                   {item.snippet && (
-                    <p className="text-[10px] text-[#9AA0A6] mt-1 line-clamp-2">
+                    <p className="text-[10px] text-[#8899AE] mt-1 line-clamp-2 leading-relaxed">
                       {item.snippet}
                     </p>
                   )}
@@ -167,7 +167,7 @@ export function DashboardSignalFeed({ signals }: DashboardSignalFeedProps) {
                     type="button"
                     disabled={pending && creatingId === item.id}
                     onClick={() => handleAddLead(item.id)}
-                    className="mt-2 inline-flex items-center gap-1 px-2 py-1 text-[10px] font-mono font-bold border border-[#4ADE80]/30 text-[#4ADE80] rounded-md hover:bg-[#4ADE80]/10 cursor-pointer disabled:opacity-50"
+                    className="mt-2 inline-flex items-center gap-1 px-2 py-1 text-[9px] font-mono font-bold border border-[#4ADE80]/25 text-[#4ADE80] rounded hover:bg-[#4ADE80]/08 cursor-pointer disabled:opacity-50 tracking-wider"
                   >
                     <Plus className="w-3 h-3" />
                     Ajouter comme lead

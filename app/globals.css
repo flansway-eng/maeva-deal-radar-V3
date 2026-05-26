@@ -1,51 +1,70 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════
+   DEAL RADAR ROOM — Charte Rothschild & Co
+   Palette : Marine institutionnel · Or champagne · Ivoire
+   ═══════════════════════════════════════════════════════════ */
+
 :root {
-  --bg-base: #0a0b0d;
-  --bg-surface: #111317;
-  --bg-elevated: #16191f;
-  --border-subtle: #1f232b;
-  --text-primary: #e8eaed;
-  --text-secondary: #9aa0a6;
+  /* — Fonds — deep navy banking */
+  --bg-base:     #07101E;   /* fond principal, marine très profond  */
+  --bg-surface:  #0C1A2E;   /* cartes / panneaux                    */
+  --bg-elevated: #112240;   /* éléments surélevés                   */
 
-  --accent-pe: #f5c518;
-  --accent-ma: #5b8def;
+  /* — Bordures — subtiles, institutionnelles */
+  --border-subtle: #1A3050;
 
-  --status-planned: #9aa0a6;
-  --status-done: #4ade80;
-  --status-postponed: #fbbf24;
-  --status-stopped: #71717a;
-  --status-cancelled: #f87171;
+  /* — Typographie — */
+  --text-primary:   #EDE8DC;  /* ivoire chaud                       */
+  --text-secondary: #8899AE;  /* acier bleu-gris                    */
+
+  /* — Accents Rothschild — */
+  --accent-pe: #C4974C;   /* or champagne PE (private equity)       */
+  --accent-ma: #4472AA;   /* acier institutionnel MA                */
+
+  /* — Statuts — */
+  --status-planned:   #8899AE;
+  --status-done:      #4ADE80;
+  --status-postponed: #C4974C;
+  --status-stopped:   #4E6070;
+  --status-cancelled: #E07070;
 }
 
 @theme inline {
-  --color-bg-base: var(--bg-base);
-  --color-bg-surface: var(--bg-surface);
-  --color-bg-elevated: var(--bg-elevated);
-  --color-border-subtle: var(--border-subtle);
-  --color-text-primary: var(--text-primary);
+  --color-bg-base:        var(--bg-base);
+  --color-bg-surface:     var(--bg-surface);
+  --color-bg-elevated:    var(--bg-elevated);
+  --color-border-subtle:  var(--border-subtle);
+  --color-text-primary:   var(--text-primary);
   --color-text-secondary: var(--text-secondary);
 
   --color-accent-pe: var(--accent-pe);
   --color-accent-ma: var(--accent-ma);
 
-  --color-status-planned: var(--status-planned);
-  --color-status-done: var(--status-done);
+  --color-status-planned:   var(--status-planned);
+  --color-status-done:      var(--status-done);
   --color-status-postponed: var(--status-postponed);
-  --color-status-stopped: var(--status-stopped);
+  --color-status-stopped:   var(--status-stopped);
   --color-status-cancelled: var(--status-cancelled);
 }
 
+/* — Base body — */
 body {
   background-color: var(--bg-base);
   color: var(--text-primary);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Custom premium scrollbar styling */
+/* — Typographie display (Cormorant Garamond) — */
+.font-display {
+  font-family: var(--font-display), "Georgia", "Times New Roman", serif;
+  letter-spacing: -0.01em;
+}
+
+/* — Scrollbar premium Rothschild — */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -54,24 +73,63 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-subtle);
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
 
+/* — Animations — */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out forwards;
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.2s ease-out forwards;
+@keyframes overdue-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 112, 112, 0); }
+  50%       { box-shadow: 0 0 0 4px rgba(224, 112, 112, 0.10); }
+}
+.animate-overdue-pulse {
+  animation: overdue-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes radar-scan {
+  0%   { opacity: 0; transform: rotate(0deg); }
+  10%  { opacity: 0.05; }
+  90%  { opacity: 0.05; }
+  100% { opacity: 0; transform: rotate(360deg); }
+}
+
+/* — Shimmer loading — */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface) 25%,
+    var(--bg-elevated) 50%,
+    var(--bg-surface) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* — Slide-up entrance — */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slideUp {
+  animation: slideUp 0.32s ease-out forwards;
+}
+
+/* — Filet d'or Rothschild (accent latéral) — */
+.roth-accent-bar {
+  background: linear-gradient(to bottom, #C4974C, #4472AA 80%);
 }

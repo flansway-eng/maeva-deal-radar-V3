@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ConfidenceBar } from "@/components/leads/confidence-bar";
 import { LeadPappersPanel } from "@/components/leads/lead-pappers-panel";
+import { GenerateSequenceButton } from "@/components/leads/generate-sequence-button";
 import { LeadQualifyPanel } from "@/components/leads/lead-qualify-panel";
 import { ReviewStatusBadge } from "@/components/leads/review-status-badge";
 import { TrackBadge } from "@/components/shared/track-badge";
@@ -47,6 +48,13 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
         <div className="flex flex-wrap items-center gap-2 mt-2">
           <TrackBadge track={lead.track} />
           <ReviewStatusBadge status={lead.reviewStatus} />
+          {lead.reviewStatus === "KEEP" && (
+            <GenerateSequenceButton
+              leadId={lead.id}
+              companyName={lead.companyName}
+              variant="primary"
+            />
+          )}
         </div>
       </div>
 

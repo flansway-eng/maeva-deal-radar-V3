@@ -4,12 +4,10 @@ import {
   FIXTURE_COMPANY_ALIASES,
   FIXTURE_REVIEW_DECISIONS,
 } from "@/lib/db/queries/governance-fixture";
-import { FIXTURE_TASKS } from "@/lib/db/queries/seed-fixture";
 import { extractDomain } from "@/lib/governance/domain";
 
 describe("Phase 3 governance fixtures", () => {
-  it("exposes 100 fixture tasks", () => {
-    expect(FIXTURE_TASKS.length).toBe(100);
+  it("build100FixtureTasks generates 100 tasks", () => {
     expect(build100FixtureTasks().length).toBe(100);
   });
 

@@ -21,9 +21,10 @@ export async function saveTaskMessageMutation(params: {
       await db.insert(sequenceEvents).values({
         eventType: "MESSAGES_REGENERATED",
         taskId: params.taskId,
-        actorId: params.actorId,
+        // actorId supprimé (non disponible en SQLite)
         note: "Message enregistré manuellement",
-        payload: { action: "save" },
+        // payload sérialisé en JSON pour SQLite
+        payload: JSON.stringify({ action: "save" }),
       });
     } catch {
       addFixtureEvent({

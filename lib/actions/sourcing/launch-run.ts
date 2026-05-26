@@ -87,7 +87,7 @@ export async function launchSourcingRun(
     actorId: user.id,
   });
 
-  revalidatePath("/sourcing");
+  revalidatePath("/", "layout");
   revalidatePath("/");
   revalidatePath("/leads");
   if (result.runId) {
